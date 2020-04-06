@@ -98,24 +98,31 @@ var KeyboardInput = /** @class */ (function () {
 }());
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
-var Gamestate = /** @class */ (function () {
-    function Gamestate(cnvCtx, cnvW, cnvH) {
+var GameState = /** @class */ (function () {
+    function GameState(cnvs) {
         var _this = this;
         // Main game logic loop
         this.gameLoop = function () {
             // Clear the canvas
-            _this.canvasCtx.clearRect(0, 0, _this.canvasW, _this.canvasH);
+            _this.canvasContext.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
             // Player input 
             _this.keyInput.inputLoop();
             // Update positions
             // Check for collisions
             // Render
             // Player
-            _this.player.shape.draw(_this.canvasCtx);
+            _this.player.shape.draw(_this.canvasContext);
         };
-        this.canvasCtx = cnvCtx;
-        this.canvasW = cnvW;
-        this.canvasH = cnvH;
+        this.canvas = cnvs;
+        var ctx = this.canvas.getContext("2d");
+        if (ctx) {
+            this.canvasContext = ctx;
+            console.log("canvas width: " + this.canvas.width + " height: " + this.canvas.height);
+        }
+        else {
+            // Couldn't get canvas context; can't draw, stop here
+            console.log("ERROR: can't get canvas context");
+        }
         this.player = new Player();
         this.keyInput = new KeyboardInput();
         // Add movement functions as callbacks
@@ -132,19 +139,14 @@ var Gamestate = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(40, this.player.moveDown);
         this.keyInput.addKeycodeCallback(83, this.player.moveDown);
     }
-    return Gamestate;
+    return GameState;
 }());
-/// <reference path="gameLogic.ts" />
+/// <reference path="gamestate.ts" />
 var gameState;
-(function () {
-    console.log("test");
-});
 window.onload = function () {
-    var test = document.getElementById("log");
-    var canvas = document.getElementById("gameCanvas");
-    var context = canvas.getContext("2d");
-    if (context instanceof CanvasRenderingContext2D) {
-        gameState = new Gamestate(context, 800, 600);
+    var canvas = document.getElementById("game-canvas");
+    if (canvas) {
+        gameState = new GameState(canvas);
         setInterval(gameState.gameLoop, 10);
     }
 };

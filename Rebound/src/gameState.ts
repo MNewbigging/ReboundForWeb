@@ -1,17 +1,25 @@
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
 
-class Gamestate {
+class GameState {
     public player: Player;
     public keyInput: KeyboardInput;
-    public canvasCtx: CanvasRenderingContext2D;
-    public canvasW: number;
-    public canvasH: number;
+    public canvas: HTMLCanvasElement;
+    // Any isn't nice, but can't have CanvasRenderingContext2d as null/un-initialised in same fashion 
+    public canvasContext: any;
 
-    constructor(cnvCtx: CanvasRenderingContext2D, cnvW: number, cnvH: number) {
-        this.canvasCtx = cnvCtx;
-        this.canvasW = cnvW;
-        this.canvasH = cnvH;
+    constructor(cnvs: HTMLCanvasElement) {
+        this.canvas = cnvs;
+        let ctx = this.canvas.getContext("2d");
+        if (ctx) {
+            this.canvasContext = ctx;
+            console.log(`canvas width: ${this.canvas.width} height: ${this.canvas.height}`);
+        }
+        else {
+            // Couldn't get canvas context; can't draw, stop here
+            console.log("ERROR: can't get canvas context");
+        }
+
         this.player = new Player();
         this.keyInput = new KeyboardInput();
 
@@ -33,7 +41,7 @@ class Gamestate {
     // Main game logic loop
     public gameLoop = (): void => {
         // Clear the canvas
-        this.canvasCtx.clearRect(0,0, this.canvasW, this.canvasH);
+        this.canvasContext.clearRect(0,0, this.canvas.width, this.canvas.height);
 
         // Player input 
         this.keyInput.inputLoop();
@@ -44,7 +52,7 @@ class Gamestate {
 
         // Render
         // Player
-        this.player.shape.draw(this.canvasCtx);
+        this.player.shape.draw(this.canvasContext);
     }
 }
 

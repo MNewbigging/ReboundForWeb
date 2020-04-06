@@ -1,18 +1,11 @@
-/// <reference path="gameLogic.ts" />
+/// <reference path="gamestate.ts" />
 
-
-var gameState: Gamestate;
-(function(){
-    console.log("test");
-})
+var gameState: GameState;
 
 window.onload = () => {
-    var test = document.getElementById("log");
-
-    var canvas = <HTMLCanvasElement>document.getElementById("gameCanvas");
-    let context = canvas.getContext("2d");
-    if (context instanceof CanvasRenderingContext2D) {
-        gameState = new Gamestate(context, 800, 600)
+    var canvas = <HTMLCanvasElement>document.getElementById("game-canvas");
+    if (canvas) {
+        gameState = new GameState(canvas)
         setInterval(gameState.gameLoop, 10);
     }
  
