@@ -53,6 +53,7 @@ var Player = /** @class */ (function () {
         this.moveSpeed = 3;
     }
     Player.prototype.moveRight = function (canvasWidth) {
+        console.log("player cw: " + canvasWidth);
         if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
             this.direction.dirX = 1;
             this.move();
@@ -152,18 +153,19 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
     }
+    GameState.prototype.resize = function () {
+        var canvasWrapper = document.getElementById("game-container");
+        if (this.canvas && canvasWrapper) {
+            var wrapperBounds = canvasWrapper.getBoundingClientRect();
+            this.canvas.width = wrapperBounds.width;
+            this.canvas.height = wrapperBounds.height;
+            console.log("canvas w: " + this.canvas.width);
+        }
+    };
     return GameState;
 }());
 /// <reference path="gamestate.ts" />
-window.onresize = function () {
-    var canvas = document.getElementById("game-canvas");
-    var canvasWrapper = document.getElementById("game-container");
-    if (canvas && canvasWrapper) {
-        var wrapperBounds = canvasWrapper.getBoundingClientRect();
-        canvas.width = wrapperBounds.width;
-        canvas.height = wrapperBounds.height;
-    }
-};
+var gameState;
 window.onload = function () {
     var canvas = document.getElementById("game-canvas");
     var canvasWrapper = document.getElementById("game-container");
@@ -171,11 +173,14 @@ window.onload = function () {
         var wrapperBounds = canvasWrapper.getBoundingClientRect();
         canvas.width = wrapperBounds.width;
         canvas.height = wrapperBounds.height;
-        var gameState = new GameState(canvas);
+        gameState = new GameState(canvas);
         setInterval(gameState.gameLoop, 10);
     }
     else {
         console.log("ERROR: couldn't find canvas element");
     }
+};
+window.onresize = function () {
+    this.gameState.resize();
 };
 //# sourceMappingURL=build.js.map

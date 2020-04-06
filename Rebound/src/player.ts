@@ -22,6 +22,7 @@ class Player {
     }
 
     public moveRight (canvasWidth: number): void {
+        console.log(`player cw: ${canvasWidth}`);
         if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
             this.direction.dirX = 1;
             this.move();

@@ -37,6 +37,16 @@ class GameState {
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
     }
 
+    public resize() {
+        let canvasWrapper = document.getElementById("game-container");
+        if (this.canvas && canvasWrapper) {
+            let wrapperBounds = canvasWrapper.getBoundingClientRect();
+            this.canvas.width = wrapperBounds.width;
+            this.canvas.height = wrapperBounds.height;
+            console.log(`canvas w: ${this.canvas.width}`);
+        }
+    }
+
     // Main game logic loop
     public gameLoop = (): void => {
         // Clear the canvas
