@@ -38,37 +38,33 @@ var Player = /** @class */ (function () {
                 _this.shape.x -= _this.moveSpeed;
             }
         };
-        this.moveRight = function () {
-            if (_this.shape.x < 600 - _this.moveSpeed - _this.shape.radius) {
-                _this.shape.x += _this.moveSpeed;
-            }
-        };
         this.moveUp = function () {
             if (_this.shape.y > _this.moveSpeed + _this.shape.radius) {
                 _this.shape.y -= _this.moveSpeed;
             }
         };
-        this.moveDown = function () {
-            if (_this.shape.y < 800 - _this.moveSpeed - _this.shape.radius) {
-                _this.shape.y += _this.moveSpeed;
-            }
-        };
         this.shape = new Circle(100, 100, 10, "green");
         this.moveSpeed = 3;
     }
+    Player.prototype.moveRight = function (canvasWidth) {
+        if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
+            this.shape.x += this.moveSpeed;
+        }
+    };
+    Player.prototype.moveDown = function (canvasHeight) {
+        if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
+            this.shape.y += this.moveSpeed;
+        }
+    };
     return Player;
 }());
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
         var _this = this;
-        // Dictionary that maps key code number to function
+        // Map key code number to callback function
         this.keyCallback = {};
-        // Dictionary that tracks which keys are pressed/released
+        // Map that tracks which keys are currently pressed
         this.keyDown = {};
-        this.addKeycodeCallback = function (keycode, f) {
-            _this.keyCallback[keycode] = f;
-            _this.keyDown[keycode] = false; // need this?
-        };
         this.keyboardDown = function (event) {
             event.preventDefault();
             _this.keyDown[event.keyCode] = true;
@@ -94,6 +90,10 @@ var KeyboardInput = /** @class */ (function () {
         document.addEventListener('keydown', this.keyboardDown);
         document.addEventListener('keyup', this.keyboardUp);
     }
+    KeyboardInput.prototype.addKeycodeCallback = function (keycode, action) {
+        this.keyCallback[keycode] = action;
+        this.keyDown[keycode] = false; // need this?
+    };
     return KeyboardInput;
 }());
 /// <reference path="player.ts" />
@@ -115,9 +115,8 @@ var GameState = /** @class */ (function () {
         };
         this.canvas = cnvs;
         var ctx = this.canvas.getContext("2d");
-        if (ctx) {
+        if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
-            console.log("canvas width: " + this.canvas.width + " height: " + this.canvas.height);
         }
         else {
             // Couldn't get canvas context; can't draw, stop here
@@ -130,24 +129,39 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
         this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight);
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight);
+        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvas.width));
+        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvas.width));
         // Up arrow / w
         this.keyInput.addKeycodeCallback(38, this.player.moveUp);
         this.keyInput.addKeycodeCallback(87, this.player.moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown);
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown);
+        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
+        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
     }
     return GameState;
 }());
 /// <reference path="gamestate.ts" />
-var gameState;
+window.onresize = function () {
+    var canvas = document.getElementById("game-canvas");
+    var canvasWrapper = document.getElementById("game-container");
+    if (canvas && canvasWrapper) {
+        var wrapperBounds = canvasWrapper.getBoundingClientRect();
+        canvas.width = wrapperBounds.width;
+        canvas.height = wrapperBounds.height;
+    }
+};
 window.onload = function () {
     var canvas = document.getElementById("game-canvas");
-    if (canvas) {
-        gameState = new GameState(canvas);
+    var canvasWrapper = document.getElementById("game-container");
+    if (canvas && canvasWrapper) {
+        var wrapperBounds = canvasWrapper.getBoundingClientRect();
+        canvas.width = wrapperBounds.width;
+        canvas.height = wrapperBounds.height;
+        var gameState = new GameState(canvas);
         setInterval(gameState.gameLoop, 10);
+    }
+    else {
+        console.log("ERROR: couldn't find canvas element");
     }
 };
 //# sourceMappingURL=build.js.map

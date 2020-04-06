@@ -11,9 +11,8 @@ class GameState {
     constructor(cnvs: HTMLCanvasElement) {
         this.canvas = cnvs;
         let ctx = this.canvas.getContext("2d");
-        if (ctx) {
+        if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
-            console.log(`canvas width: ${this.canvas.width} height: ${this.canvas.height}`);
         }
         else {
             // Couldn't get canvas context; can't draw, stop here
@@ -28,14 +27,14 @@ class GameState {
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
         this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight);
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight);
+        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvas.width));
+        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvas.width));
         // Up arrow / w
         this.keyInput.addKeycodeCallback(38, this.player.moveUp);
         this.keyInput.addKeycodeCallback(87, this.player.moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown);
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown);
+        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
+        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
     }
 
     // Main game logic loop

@@ -16,12 +16,12 @@ class Player {
         }    
     }
 
-    public moveRight = (): void => {
-        if (this.shape.x < 600 - this.moveSpeed - this.shape.radius) {
+    moveRight (canvasWidth: number): void {
+        if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
             this.shape.x += this.moveSpeed;
         }
-     
     }
+
 
     public moveUp = (): void => {
         if (this.shape.y > this.moveSpeed + this.shape.radius) {
@@ -29,8 +29,8 @@ class Player {
         }   
     }
 
-    public moveDown = (): void => {
-        if (this.shape.y < 800 - this.moveSpeed - this.shape.radius) {
+    public moveDown(canvasHeight: number): void {
+        if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
             this.shape.y += this.moveSpeed;
         }
         

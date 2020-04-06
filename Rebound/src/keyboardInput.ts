@@ -1,7 +1,9 @@
+type KeyboardInputCallback = (opParam?: any) => any;
+
 class KeyboardInput {
-    // Dictionary that maps key code number to function
-    public keyCallback: { [keycode: number]: () => void; } = {};
-    // Dictionary that tracks which keys are pressed/released
+    // Map key code number to callback function
+    public keyCallback: { [keycode: number]: KeyboardInputCallback } = {};
+    // Map that tracks which keys are currently pressed
     public keyDown: { [keycode: number] : boolean; } = {};
 
     constructor() {
@@ -9,8 +11,8 @@ class KeyboardInput {
         document.addEventListener('keyup', this.keyboardUp);
     }
 
-    public addKeycodeCallback = (keycode: number, f: () => void): void => {
-        this.keyCallback[keycode] = f;
+    public addKeycodeCallback (keycode: number, action: KeyboardInputCallback): void {
+        this.keyCallback[keycode] = action;
         this.keyDown[keycode] = false; // need this?
     }
 
@@ -30,7 +32,7 @@ class KeyboardInput {
             // If pressed
             if (is_down) {
                 // Grab function for that key press
-                var callback: () => void = this.keyCallback[key];
+                var callback: KeyboardInputCallback = this.keyCallback[key];
                 if (callback != null) {
                     // Perform that function
                     callback();
