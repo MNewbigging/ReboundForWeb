@@ -1,8 +1,34 @@
-// Global vars
-var gState;
-var canvasContext;
-var canvasWidth;
-var canvasHeight;
+"use strict";
+var Circle = /** @class */ (function () {
+    function Circle(x, y, radius, color, lineWidth) {
+        var _this = this;
+        if (color === void 0) { color = "red"; }
+        if (lineWidth === void 0) { lineWidth = 2; }
+        this.x = 0;
+        this.y = 0;
+        this.radius = 10;
+        this.lineWidth = 2;
+        this.color = "red";
+        this.draw = function (canvasContext) {
+            canvasContext.save();
+            canvasContext.beginPath();
+            canvasContext.arc(_this.x, _this.y, _this.radius, 0, 2 * Math.PI);
+            canvasContext.strokeStyle = _this.color;
+            canvasContext.stroke();
+            canvasContext.fillStyle = _this.color;
+            canvasContext.fill();
+            canvasContext.lineWidth = _this.lineWidth;
+            canvasContext.restore();
+        };
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.lineWidth = lineWidth;
+    }
+    return Circle;
+}());
+/// <reference path="shapes.ts" />
 var Player = /** @class */ (function () {
     function Player() {
         var _this = this;
@@ -13,7 +39,7 @@ var Player = /** @class */ (function () {
             }
         };
         this.moveRight = function () {
-            if (_this.shape.x < canvasWidth - _this.moveSpeed - _this.shape.radius) {
+            if (_this.shape.x < 600 - _this.moveSpeed - _this.shape.radius) {
                 _this.shape.x += _this.moveSpeed;
             }
         };
@@ -23,11 +49,11 @@ var Player = /** @class */ (function () {
             }
         };
         this.moveDown = function () {
-            if (_this.shape.y < canvasHeight - _this.moveSpeed - _this.shape.radius) {
+            if (_this.shape.y < 800 - _this.moveSpeed - _this.shape.radius) {
                 _this.shape.y += _this.moveSpeed;
             }
         };
-        this.shape = new Circle(0.5 * canvasWidth, 0.8 * canvasHeight, 20, "green");
+        this.shape = new Circle(100, 100, 10, "green");
         this.moveSpeed = 3;
     }
     return Player;
@@ -41,7 +67,7 @@ var KeyboardInput = /** @class */ (function () {
         this.keyDown = {};
         this.addKeycodeCallback = function (keycode, f) {
             _this.keyCallback[keycode] = f;
-            _this.keyDown[keycode] = false;
+            _this.keyDown[keycode] = false; // need this?
         };
         this.keyboardDown = function (event) {
             event.preventDefault();
@@ -70,34 +96,26 @@ var KeyboardInput = /** @class */ (function () {
     }
     return KeyboardInput;
 }());
+/// <reference path="player.ts" />
+/// <reference path="keyboardInput.ts" />
 var Gamestate = /** @class */ (function () {
-    function Gamestate() {
+    function Gamestate(cnvCtx, cnvW, cnvH) {
         var _this = this;
-        // Check for collisions between player and others
-        this.checkCollisions = function () {
-        };
-        // Initial setup
-        this.gameInit = function () {
-            // Create an enemy
-            _this.enemies[0] = new Circle(0.5 * canvasWidth, 0.5 * canvasHeight, 10);
-        };
         // Main game logic loop
         this.gameLoop = function () {
             // Clear the canvas
-            canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
+            _this.canvasCtx.clearRect(0, 0, _this.canvasW, _this.canvasH);
             // Player input 
             _this.keyInput.inputLoop();
             // Update positions
             // Check for collisions
             // Render
             // Player
-            _this.player.shape.draw();
-            // Enemies
-            for (var i = 0; i < _this.enemies.length; i++) {
-                _this.enemies[0].draw();
-            }
+            _this.player.shape.draw(_this.canvasCtx);
         };
-        this.enemies = [];
+        this.canvasCtx = cnvCtx;
+        this.canvasW = cnvW;
+        this.canvasH = cnvH;
         this.player = new Player();
         this.keyInput = new KeyboardInput();
         // Add movement functions as callbacks
@@ -116,47 +134,18 @@ var Gamestate = /** @class */ (function () {
     }
     return Gamestate;
 }());
-var Circle = /** @class */ (function () {
-    function Circle(x, y, radius, color, lineWidth) {
-        var _this = this;
-        if (color === void 0) { color = "red"; }
-        if (lineWidth === void 0) { lineWidth = 2; }
-        this.x = 0;
-        this.y = 0;
-        this.radius = 10;
-        this.lineWidth = 2;
-        this.color = "red";
-        this.draw = function () {
-            canvasContext.save();
-            canvasContext.beginPath();
-            canvasContext.arc(_this.x, _this.y, _this.radius, 0, 2 * Math.PI);
-            canvasContext.strokeStyle = _this.color;
-            canvasContext.stroke();
-            canvasContext.fillStyle = _this.color;
-            canvasContext.fill();
-            canvasContext.lineWidth = _this.lineWidth;
-            canvasContext.restore();
-        };
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
-        this.lineWidth = lineWidth;
-    }
-    return Circle;
-}());
-// Setup function runs on window load
+/// <reference path="gameLogic.ts" />
+var gameState;
+(function () {
+    console.log("test");
+});
 window.onload = function () {
-    // Setup canvas vars
+    var test = document.getElementById("log");
     var canvas = document.getElementById("gameCanvas");
-    canvasContext = canvas.getContext("2d");
-    canvasWidth = 800;
-    canvasHeight = 600;
-    // Create new gamestate object
-    gState = new Gamestate();
-    // Perform game setup/restart
-    gState.gameInit();
-    // Run main game loop
-    setInterval(gState.gameLoop, 10);
+    var context = canvas.getContext("2d");
+    if (context instanceof CanvasRenderingContext2D) {
+        gameState = new Gamestate(context, 800, 600);
+        setInterval(gameState.gameLoop, 10);
+    }
 };
-//# sourceMappingURL=gameLogic.js.map
+//# sourceMappingURL=build.js.map
