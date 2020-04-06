@@ -118,9 +118,9 @@ var Gamestate = /** @class */ (function () {
 }());
 var Circle = /** @class */ (function () {
     function Circle(x, y, radius, color, lineWidth) {
+        var _this = this;
         if (color === void 0) { color = "red"; }
         if (lineWidth === void 0) { lineWidth = 2; }
-        var _this = this;
         this.x = 0;
         this.y = 0;
         this.radius = 10;
