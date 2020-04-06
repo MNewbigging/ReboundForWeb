@@ -45,10 +45,6 @@ class GameState {
         // Player input 
         this.keyInput.inputLoop();
 
-        // Update positions
-
-        // Check for collisions
-
         // Render
         // Player
         this.player.shape.draw(this.canvasContext);

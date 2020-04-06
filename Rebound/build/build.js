@@ -32,15 +32,21 @@ var Circle = /** @class */ (function () {
 var Player = /** @class */ (function () {
     function Player() {
         var _this = this;
+        this.direction = {
+            dirX: 0,
+            dirY: 0
+        };
         this.moveLeft = function () {
             // Ensure player doesn't leave canvas
             if (_this.shape.x > _this.moveSpeed + _this.shape.radius) {
-                _this.shape.x -= _this.moveSpeed;
+                _this.direction.dirX = -1;
+                _this.move();
             }
         };
         this.moveUp = function () {
             if (_this.shape.y > _this.moveSpeed + _this.shape.radius) {
-                _this.shape.y -= _this.moveSpeed;
+                _this.direction.dirY = -1;
+                _this.move();
             }
         };
         this.shape = new Circle(100, 100, 10, "green");
@@ -48,13 +54,23 @@ var Player = /** @class */ (function () {
     }
     Player.prototype.moveRight = function (canvasWidth) {
         if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
-            this.shape.x += this.moveSpeed;
+            this.direction.dirX = 1;
+            this.move();
         }
     };
     Player.prototype.moveDown = function (canvasHeight) {
         if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
-            this.shape.y += this.moveSpeed;
+            this.direction.dirY = 1;
+            this.move();
         }
+    };
+    Player.prototype.move = function () {
+        // Check if moving diagonally, cap speed
+        var speed = (this.direction.dirX != 0 && this.direction.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
+        this.shape.x += (this.direction.dirX * this.moveSpeed);
+        this.shape.y += (this.direction.dirY * this.moveSpeed);
+        this.direction.dirX = 0;
+        this.direction.dirY = 0;
     };
     return Player;
 }());
@@ -107,8 +123,6 @@ var GameState = /** @class */ (function () {
             _this.canvasContext.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
             // Player input 
             _this.keyInput.inputLoop();
-            // Update positions
-            // Check for collisions
             // Render
             // Player
             _this.player.shape.draw(_this.canvasContext);
