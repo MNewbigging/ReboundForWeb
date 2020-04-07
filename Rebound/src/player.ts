@@ -8,70 +8,64 @@ class Player extends CircleMovingEntity {
     public lastDir: Point = new Point(0, -1);
 
     constructor() {
-        super(20, 20, 0, 0, "green", 2, 3, 10);   
-        this.canvasUtils = CanvasUtils.getInstance();     
+        super(new Point(20, 20), "green", 2, 10, new Point(), 3);     
         this.bullets = [];
     }
 
     public moveLeft = (): void => {
-        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.pos.x, this.moveSpeed, this.radius)) {
-            this.dir.x = -1;
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
+            this.direction.x = -1;
         }
     }
 
     public moveRight = (): void => {
-        if (!this.canvasUtils.outOfBoundsRight(this.pos.x, this.moveSpeed, this.radius)) {
-            this.dir.x = 1;
+        if (!this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
+            this.direction.x = 1;
         }
     }
 
     public moveUp = (): void => {
-        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.pos.y, this.moveSpeed, this.radius)) {
-            this.dir.y = -1;
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
+            this.direction.y = -1;
         }   
     }
 
     public moveDown = (): void => {
-        if (!this.canvasUtils.outOfBoundsBottom(this.pos.y, this.moveSpeed, this.radius)) {
-            this.dir.y = 1;
+        if (!this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
+            this.direction.y = 1;
         } 
     }
 
     public fireShot = (): void => {
-        Point.Print(this.canvasUtils.getMousePos(), "mouse pos:");
-        Point.Print(this.pos, "player pos:");
-        let playerToMouse: Point = Point.Subtract(this.canvasUtils.getMousePos(), this.pos);
-        Point.Print(playerToMouse, "player to mouse");
+        let playerToMouse: Point = Point.Subtract(this.canvasUtils.getMousePos(), this.position);
         let normDir: Point = Point.Normalize(playerToMouse);
-        Point.Print(normDir, "normalised:");
 
-        this.bullets.push(new Bullet(
-            this.pos.x, this.pos.y, 
-            normDir.x, normDir.y
-        ));
-        
+        this.bullets.push(new Bullet(new Point(this.position.x, this.position.y), normDir));
     }
 
     update(): void {
         super.update();
         
         // If there is a direction to save
-        if (this.dir.x != 0 || this.dir.y != 0) {
+        if (this.direction.x != 0 || this.direction.y != 0) {
             // Save current direction for bullets next frame
-            this.lastDir.x = this.dir.x;
-            this.lastDir.y = this.dir.y;
+            this.lastDir.x = this.direction.x;
+            this.lastDir.y = this.direction.y;
         }
 
         // Clear current dir to stop player moving into next frame
-        this.dir.x = 0;
-        this.dir.y = 0;
+        this.direction.x = 0;
+        this.direction.y = 0;
 
-        // Remove any dead bullets (outside of canvas)
+        // Remove any dead bullets (outside of canvas) and update the rest
         for(let i: number = 0; i < this.bullets.length; i++) {
             if (!this.bullets[i].alive) {
                 this.bullets.splice(i, 1);
             }
-        }
+            else {
+                this.bullets[i].update();
+            }
+        }       
     }
 
 }

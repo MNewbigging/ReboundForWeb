@@ -2,14 +2,15 @@
 /// <reference path="utils.ts" />
 
 interface IEntity {
-    pos: Point;
+    canvasUtils: CanvasUtils;
+    position: Point;
     color: string;
     lineWidth: number;
-    draw(canvasContext: CanvasRenderingContext2D) : void;
+    draw() : void;
 }
 
 interface IMovingEntity {
-    dir: Point;
+    direction: Point;
     moveSpeed: number;
     update(): void;
 }
@@ -18,43 +19,28 @@ interface ICircleEntity {
     radius: number;
 }
 
-class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
+class CircleEntity implements IEntity, ICircleEntity {
     // IEntity fields default values
-    pos: Point = new Point();
-    color: string = "black";
-    lineWidth: number =  2;
-    // IMovingEntity fields default values
-    dir: Point = new Point();
-    moveSpeed: number = 2;
-    // ICircleEntity fields default values
-    radius: number = 10;
     canvasUtils: CanvasUtils;
+    position: Point;
+    color: string;
+    lineWidth: number;
+    // ICircleEntity fields default values
+    radius: number;
 
-    constructor(px: number, py: number, dx: number, dy: number, 
-                col: string, lw: number, speed: number, r: number) {
-        this.pos.x = px;
-        this.pos.y = py;
-        this.dir.x = dx;
-        this.dir.y = dy;
+    constructor(p: Point, col: string, lw: number, r: number) {
+        this.canvasUtils = CanvasUtils.getInstance();
+        this.position = p;
         this.color = col;
         this.lineWidth = lw;
-        this.moveSpeed = speed;
         this.radius = r;
-        this.canvasUtils = CanvasUtils.getInstance();
-    }
-
-    update(): void {
-        // Check if moving diagonally, cap speed
-        let speed: number = (this.dir.x != 0 && this.dir.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        this.pos.x += (this.dir.x * speed);
-        this.pos.y += (this.dir.y * speed);
     }
 
     draw(): void {
         let canvasContext = this.canvasUtils.getCanvasContext();
         canvasContext.save();
         canvasContext.beginPath();
-        canvasContext.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+        canvasContext.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
         canvasContext.strokeStyle = this.color;
         canvasContext.stroke();
         canvasContext.fillStyle = this.color;
@@ -62,6 +48,25 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
         canvasContext.lineWidth = this.lineWidth;
         canvasContext.restore();
     }
+}
 
+class CircleMovingEntity extends CircleEntity implements IMovingEntity {
+    // IMovingEntity fields default values
+    direction: Point;
+    moveSpeed: number;
+
+    constructor(p: Point, col: string, lw: number, r: number, dir: Point, speed: number) {
+        super(p, col, lw, r);
+        this.direction = dir;
+        this.moveSpeed = speed;
+    }
+
+
+    update(): void {
+        // Check if moving diagonally, cap speed
+        let speed: number = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        this.position.x += (this.direction.x * speed);
+        this.position.y += (this.direction.y * speed);
+    }
     
 }

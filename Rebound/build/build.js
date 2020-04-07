@@ -92,7 +92,6 @@ var CanvasUtils = /** @class */ (function () {
             var wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
-            //this.canvasContext.translate(this.canvas.width / 2, this.canvas.height / 2);
             var canvasBounds = this.canvas.getBoundingClientRect();
             this.mouseOffsetLeft = canvasBounds.left;
             this.mouseOffsetTop = canvasBounds.top;
@@ -126,38 +125,19 @@ var CanvasUtils = /** @class */ (function () {
 }());
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="utils.ts" />
-var CircleMovingEntity = /** @class */ (function () {
-    function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
-        // IEntity fields default values
-        this.pos = new Point();
-        this.color = "black";
-        this.lineWidth = 2;
-        // IMovingEntity fields default values
-        this.dir = new Point();
-        this.moveSpeed = 2;
-        // ICircleEntity fields default values
-        this.radius = 10;
-        this.pos.x = px;
-        this.pos.y = py;
-        this.dir.x = dx;
-        this.dir.y = dy;
+var CircleEntity = /** @class */ (function () {
+    function CircleEntity(p, col, lw, r) {
+        this.canvasUtils = CanvasUtils.getInstance();
+        this.position = p;
         this.color = col;
         this.lineWidth = lw;
-        this.moveSpeed = speed;
         this.radius = r;
-        this.canvasUtils = CanvasUtils.getInstance();
     }
-    CircleMovingEntity.prototype.update = function () {
-        // Check if moving diagonally, cap speed
-        var speed = (this.dir.x != 0 && this.dir.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        this.pos.x += (this.dir.x * speed);
-        this.pos.y += (this.dir.y * speed);
-    };
-    CircleMovingEntity.prototype.draw = function () {
+    CircleEntity.prototype.draw = function () {
         var canvasContext = this.canvasUtils.getCanvasContext();
         canvasContext.save();
         canvasContext.beginPath();
-        canvasContext.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+        canvasContext.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
         canvasContext.strokeStyle = this.color;
         canvasContext.stroke();
         canvasContext.fillStyle = this.color;
@@ -165,8 +145,24 @@ var CircleMovingEntity = /** @class */ (function () {
         canvasContext.lineWidth = this.lineWidth;
         canvasContext.restore();
     };
-    return CircleMovingEntity;
+    return CircleEntity;
 }());
+var CircleMovingEntity = /** @class */ (function (_super) {
+    __extends(CircleMovingEntity, _super);
+    function CircleMovingEntity(p, col, lw, r, dir, speed) {
+        var _this = _super.call(this, p, col, lw, r) || this;
+        _this.direction = dir;
+        _this.moveSpeed = speed;
+        return _this;
+    }
+    CircleMovingEntity.prototype.update = function () {
+        // Check if moving diagonally, cap speed
+        var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        this.position.x += (this.direction.x * speed);
+        this.position.y += (this.direction.y * speed);
+    };
+    return CircleMovingEntity;
+}(CircleEntity));
 /// <reference path="entities.ts" />
 var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
@@ -174,23 +170,23 @@ var Bullet = /** @class */ (function (_super) {
     +1 to this every rebound; damage can be multiplied rather than if(active) each frame!
     public damageMultiplier: number = 0;
     */
-    function Bullet(px, py, dx, dy) {
-        var _this = _super.call(this, px, py, dx, dy, "red", 1, 20, 5) || this;
+    function Bullet(p, dir) {
+        var _this = _super.call(this, p, "red", 1, 5, dir, 5) || this;
         _this.alive = true; // does this bullet exist
         return _this;
     }
     Bullet.prototype.update = function () {
         _super.prototype.update.call(this);
-        if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.x, this.moveSpeed, this.radius)) {
+        if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.y, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsRight(this.pos.x, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsBottom(this.pos.y, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
     };
@@ -203,56 +199,54 @@ var Bullet = /** @class */ (function (_super) {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
-        var _this = _super.call(this, 20, 20, 0, 0, "green", 2, 3, 10) || this;
+        var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 3) || this;
         _this.lastDir = new Point(0, -1);
         _this.moveLeft = function () {
-            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.pos.x, _this.moveSpeed, _this.radius)) {
-                _this.dir.x = -1;
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.position.x, _this.moveSpeed, _this.radius)) {
+                _this.direction.x = -1;
             }
         };
         _this.moveRight = function () {
-            if (!_this.canvasUtils.outOfBoundsRight(_this.pos.x, _this.moveSpeed, _this.radius)) {
-                _this.dir.x = 1;
+            if (!_this.canvasUtils.outOfBoundsRight(_this.position.x, _this.moveSpeed, _this.radius)) {
+                _this.direction.x = 1;
             }
         };
         _this.moveUp = function () {
-            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.pos.y, _this.moveSpeed, _this.radius)) {
-                _this.dir.y = -1;
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.position.y, _this.moveSpeed, _this.radius)) {
+                _this.direction.y = -1;
             }
         };
         _this.moveDown = function () {
-            if (!_this.canvasUtils.outOfBoundsBottom(_this.pos.y, _this.moveSpeed, _this.radius)) {
-                _this.dir.y = 1;
+            if (!_this.canvasUtils.outOfBoundsBottom(_this.position.y, _this.moveSpeed, _this.radius)) {
+                _this.direction.y = 1;
             }
         };
         _this.fireShot = function () {
-            Point.Print(_this.canvasUtils.getMousePos(), "mouse pos:");
-            Point.Print(_this.pos, "player pos:");
-            var playerToMouse = Point.Subtract(_this.canvasUtils.getMousePos(), _this.pos);
-            Point.Print(playerToMouse, "player to mouse");
+            var playerToMouse = Point.Subtract(_this.canvasUtils.getMousePos(), _this.position);
             var normDir = Point.Normalize(playerToMouse);
-            Point.Print(normDir, "normalised:");
-            _this.bullets.push(new Bullet(_this.pos.x, _this.pos.y, normDir.x, normDir.y));
+            _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), normDir));
         };
-        _this.canvasUtils = CanvasUtils.getInstance();
         _this.bullets = [];
         return _this;
     }
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
         // If there is a direction to save
-        if (this.dir.x != 0 || this.dir.y != 0) {
+        if (this.direction.x != 0 || this.direction.y != 0) {
             // Save current direction for bullets next frame
-            this.lastDir.x = this.dir.x;
-            this.lastDir.y = this.dir.y;
+            this.lastDir.x = this.direction.x;
+            this.lastDir.y = this.direction.y;
         }
         // Clear current dir to stop player moving into next frame
-        this.dir.x = 0;
-        this.dir.y = 0;
-        // Remove any dead bullets (outside of canvas)
+        this.direction.x = 0;
+        this.direction.y = 0;
+        // Remove any dead bullets (outside of canvas) and update the rest
         for (var i = 0; i < this.bullets.length; i++) {
             if (!this.bullets[i].alive) {
                 this.bullets.splice(i, 1);
+            }
+            else {
+                this.bullets[i].update();
             }
         }
     };
@@ -338,13 +332,6 @@ var GameState = /** @class */ (function () {
     GameState.prototype.updateAll = function () {
         // Update player
         this.player.update();
-        // Update player bullets
-        if (this.player.bullets.length > 0) {
-            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
-                var bullet = _a[_i];
-                bullet.update();
-            }
-        }
     };
     GameState.prototype.renderAll = function () {
         // Render player

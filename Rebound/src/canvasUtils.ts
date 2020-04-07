@@ -50,7 +50,6 @@ class CanvasUtils {
             let wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
-            //this.canvasContext.translate(this.canvas.width / 2, this.canvas.height / 2);
 
             let canvasBounds = this.canvas.getBoundingClientRect();
             this.mouseOffsetLeft = canvasBounds.left;

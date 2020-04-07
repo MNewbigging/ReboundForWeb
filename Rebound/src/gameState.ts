@@ -36,13 +36,6 @@ class GameState {
     public updateAll(): void {
         // Update player
         this.player.update();
-
-        // Update player bullets
-        if (this.player.bullets.length > 0) {
-            for(let bullet of this.player.bullets) {
-                bullet.update();
-            }
-        }
     }
 
     public renderAll(): void {
