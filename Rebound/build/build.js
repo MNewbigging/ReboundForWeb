@@ -40,13 +40,11 @@ var Player = /** @class */ (function () {
             // Ensure player doesn't leave canvas
             if (_this.shape.x > _this.moveSpeed + _this.shape.radius) {
                 _this.direction.dirX = -1;
-                _this.move();
             }
         };
         this.moveUp = function () {
             if (_this.shape.y > _this.moveSpeed + _this.shape.radius) {
                 _this.direction.dirY = -1;
-                _this.move();
             }
         };
         this.shape = new Circle(100, 100, 10, "green");
@@ -56,16 +54,14 @@ var Player = /** @class */ (function () {
         console.log("player cw: " + canvasWidth);
         if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
             this.direction.dirX = 1;
-            this.move();
         }
     };
     Player.prototype.moveDown = function (canvasHeight) {
         if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
             this.direction.dirY = 1;
-            this.move();
         }
     };
-    Player.prototype.move = function () {
+    Player.prototype.update = function () {
         // Check if moving diagonally, cap speed
         var speed = (this.direction.dirX != 0 && this.direction.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
         this.shape.x += (this.direction.dirX * this.moveSpeed);
@@ -92,9 +88,8 @@ var KeyboardInput = /** @class */ (function () {
         this.inputLoop = function () {
             // Loop through all values in dictionary
             for (var key in _this.keyDown) {
-                var is_down = _this.keyDown[key];
                 // If pressed
-                if (is_down) {
+                if (_this.keyDown[key]) {
                     // Grab function for that key press
                     var callback = _this.keyCallback[key];
                     if (callback != null) {
@@ -124,9 +119,13 @@ var GameState = /** @class */ (function () {
             _this.canvasContext.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
             // Player input 
             _this.keyInput.inputLoop();
+            // Update
+            _this.player.update();
             // Render
             // Player
             _this.player.shape.draw(_this.canvasContext);
+            // Repeat this function to loop
+            requestAnimationFrame(_this.gameLoop);
         };
         var cvs = document.getElementById("game-canvas");
         if (cvs instanceof HTMLCanvasElement) {
@@ -168,6 +167,7 @@ var GameState = /** @class */ (function () {
 var gameState;
 window.onload = function () {
     gameState = new GameState();
-    setInterval(gameState.gameLoop, 10);
+    //setInterval(gameState.gameLoop, 10);
+    requestAnimationFrame(gameState.gameLoop);
 };
 //# sourceMappingURL=build.js.map

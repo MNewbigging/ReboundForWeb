@@ -28,9 +28,8 @@ class KeyboardInput {
     public inputLoop = (): void => {
         // Loop through all values in dictionary
         for (var key in this.keyDown) {
-            var is_down: boolean = this.keyDown[key];
             // If pressed
-            if (is_down) {
+            if (this.keyDown[key]) {
                 // Grab function for that key press
                 var callback: KeyboardInputCallback = this.keyCallback[key];
                 if (callback != null) {

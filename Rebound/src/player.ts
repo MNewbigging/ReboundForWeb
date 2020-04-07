@@ -17,7 +17,6 @@ class Player {
         // Ensure player doesn't leave canvas
         if (this.shape.x > this.moveSpeed + this.shape.radius) {
             this.direction.dirX = -1;
-            this.move();
         }    
     }
 
@@ -25,7 +24,6 @@ class Player {
         console.log(`player cw: ${canvasWidth}`);
         if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
             this.direction.dirX = 1;
-            this.move();
         }
     }
 
@@ -33,18 +31,16 @@ class Player {
     public moveUp = (): void => {
         if (this.shape.y > this.moveSpeed + this.shape.radius) {
             this.direction.dirY = -1;
-            this.move();
         }   
     }
 
     public moveDown(canvasHeight: number): void {
         if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
             this.direction.dirY = 1;
-            this.move();
         } 
     }
 
-    public move() { 
+    public update() { 
         // Check if moving diagonally, cap speed
         let speed: number = (this.direction.dirX != 0 && this.direction.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
 

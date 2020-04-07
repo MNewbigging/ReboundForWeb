@@ -57,9 +57,15 @@ class GameState {
         // Player input 
         this.keyInput.inputLoop();
 
+        // Update
+        this.player.update();
+
         // Render
         // Player
         this.player.shape.draw(this.canvasContext);
+
+        // Repeat this function to loop
+        requestAnimationFrame(this.gameLoop);
     }
 }
 
