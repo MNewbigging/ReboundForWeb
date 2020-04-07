@@ -35,6 +35,12 @@ var CircleMovingEntity = /** @class */ (function () {
         this.radius = r;
     }
     CircleMovingEntity.prototype.update = function () {
+        // Check if moving diagonally, cap speed
+        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        this.posX += (this.dirX * speed);
+        this.posY += (this.dirY * speed);
+        this.dirX = 0;
+        this.dirY = 0;
     };
     CircleMovingEntity.prototype.draw = function (canvasContext) {
         canvasContext.save();
@@ -81,12 +87,7 @@ var Player = /** @class */ (function (_super) {
         console.log("Pew pew");
     };
     Player.prototype.update = function () {
-        // Check if moving diagonally, cap speed
-        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
-        this.posX += (this.dirX * this.moveSpeed);
-        this.posY += (this.dirY * this.moveSpeed);
-        this.dirX = 0;
-        this.dirY = 0;
+        _super.prototype.update.call(this);
     };
     return Player;
 }(CircleMovingEntity));

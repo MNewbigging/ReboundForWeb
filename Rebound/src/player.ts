@@ -35,13 +35,7 @@ class Player extends CircleMovingEntity {
         console.log("Pew pew");
     }
 
-    public update() { 
-        // Check if moving diagonally, cap speed
-        let speed: number = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
-
-        this.posX += (this.dirX * this.moveSpeed);
-        this.posY += (this.dirY * this.moveSpeed);
-        this.dirX = 0;
-        this.dirY = 0;
+    update(): void { 
+        super.update();
     }
 }
