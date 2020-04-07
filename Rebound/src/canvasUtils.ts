@@ -1,11 +1,12 @@
+/// <reference path="utils.ts" />
+
 class CanvasUtils {
     private static instance: CanvasUtils;
     private canvas: any;
     private canvasContext: any;
     private mouseOffsetLeft: number = 0;
     private mouseOffsetTop: number = 0;
-    private mousePosX: number = 0;
-    private mousePosY: number = 0;
+    private mousePos: Point = new Point();
 
     public static getInstance(): CanvasUtils {
         if (!this.instance) {
@@ -53,9 +54,9 @@ class CanvasUtils {
     }    
 
     private getMousePos = (event: MouseEvent): void => {
-        this.mousePosX = event.clientX - this.mouseOffsetLeft;
-        this.mousePosY = event.clientY - this.mouseOffsetTop;
-        console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
+        this.mousePos.x = event.clientX - this.mouseOffsetLeft;
+        this.mousePos.y = event.clientY - this.mouseOffsetTop;
+        //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
     }
 
     public clearCanvas(): void { 

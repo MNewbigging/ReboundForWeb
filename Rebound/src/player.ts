@@ -1,11 +1,11 @@
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
+/// <reference path="utils.ts" />
 
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
-    public lastDirX: number = 0;
-    public lastDirY: number = -1;
+    public lastDir: Point = new Point(0, -1);
 
     constructor() {
         super(50, 50, 0, 0, "green", 2, 3, 10);   
@@ -14,33 +14,33 @@ class Player extends CircleMovingEntity {
     }
 
     public moveLeft = (): void => {
-        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.posX, this.moveSpeed, this.radius)) {
-            this.dirX = -1;
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.pos.x, this.moveSpeed, this.radius)) {
+            this.dir.x = -1;
         }
     }
 
     public moveRight = (): void => {
-        if (!this.canvasUtils.outOfBoundsRight(this.posX, this.moveSpeed, this.radius)) {
-            this.dirX = 1;
+        if (!this.canvasUtils.outOfBoundsRight(this.pos.x, this.moveSpeed, this.radius)) {
+            this.dir.x = 1;
         }
     }
 
     public moveUp = (): void => {
-        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.posY, this.moveSpeed, this.radius)) {
-            this.dirY = -1;
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.pos.y, this.moveSpeed, this.radius)) {
+            this.dir.y = -1;
         }   
     }
 
     public moveDown = (): void => {
-        if (!this.canvasUtils.outOfBoundsBottom(this.posY, this.moveSpeed, this.radius)) {
-            this.dirY = 1;
+        if (!this.canvasUtils.outOfBoundsBottom(this.pos.y, this.moveSpeed, this.radius)) {
+            this.dir.y = 1;
         } 
     }
 
     public fireShot = (): void => {
         this.bullets.push(new Bullet(
-            this.posX, this.posY, 
-            this.lastDirX, this.lastDirY
+            this.pos.x, this.pos.y, 
+            this.lastDir.x, this.lastDir.y
         ));
     }
 
@@ -48,15 +48,15 @@ class Player extends CircleMovingEntity {
         super.update();
         
         // If there is a direction to save
-        if (this.dirX != 0 || this.dirY != 0) {
+        if (this.dir.x != 0 || this.dir.y != 0) {
             // Save current direction for bullets next frame
-            this.lastDirX = this.dirX;
-            this.lastDirY = this.dirY;
+            this.lastDir.x = this.dir.x;
+            this.lastDir.y = this.dir.y;
         }
 
         // Clear current dir to stop player moving into next frame
-        this.dirX = 0;
-        this.dirY = 0;
+        this.dir.x = 0;
+        this.dir.y = 0;
 
         // Remove any dead bullets (outside of canvas)
         for(let i: number = 0; i < this.bullets.length; i++) {

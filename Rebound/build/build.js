@@ -12,17 +12,28 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var Point = /** @class */ (function () {
+    function Point(xVal, yVal) {
+        if (xVal === void 0) { xVal = 0; }
+        if (yVal === void 0) { yVal = 0; }
+        this.x = 0;
+        this.y = 0;
+        this.x = xVal;
+        this.y = yVal;
+    }
+    return Point;
+}());
+/// <reference path="utils.ts" />
 var CanvasUtils = /** @class */ (function () {
     function CanvasUtils() {
         var _this = this;
         this.mouseOffsetLeft = 0;
         this.mouseOffsetTop = 0;
-        this.mousePosX = 0;
-        this.mousePosY = 0;
+        this.mousePos = new Point();
         this.getMousePos = function (event) {
-            _this.mousePosX = event.clientX - _this.mouseOffsetLeft;
-            _this.mousePosY = event.clientY - _this.mouseOffsetTop;
-            console.log("mouse posx: " + _this.mousePosX + " posy: " + _this.mousePosY);
+            _this.mousePos.x = event.clientX - _this.mouseOffsetLeft;
+            _this.mousePos.y = event.clientY - _this.mouseOffsetTop;
+            //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
         };
         this.setupCanvas();
         document.addEventListener('mousemove', this.getMousePos);
@@ -88,20 +99,22 @@ var CanvasUtils = /** @class */ (function () {
     return CanvasUtils;
 }());
 /// <reference path= "canvasUtils.ts" />
+/// <reference path="utils.ts" />
 var CircleMovingEntity = /** @class */ (function () {
     function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
         // IEntity fields default values
-        this.posX = 0;
-        this.posY = 0;
+        this.pos = new Point();
         this.color = "black";
         this.lineWidth = 2;
+        // IMovingEntity fields default values
+        this.dir = new Point();
         this.moveSpeed = 2;
         // ICircleEntity fields default values
         this.radius = 10;
-        this.posX = px;
-        this.posY = py;
-        this.dirX = dx;
-        this.dirY = dy;
+        this.pos.x = px;
+        this.pos.y = py;
+        this.dir.x = dx;
+        this.dir.y = dy;
         this.color = col;
         this.lineWidth = lw;
         this.moveSpeed = speed;
@@ -110,15 +123,15 @@ var CircleMovingEntity = /** @class */ (function () {
     }
     CircleMovingEntity.prototype.update = function () {
         // Check if moving diagonally, cap speed
-        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        this.posX += (this.dirX * speed);
-        this.posY += (this.dirY * speed);
+        var speed = (this.dir.x != 0 && this.dir.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        this.pos.x += (this.dir.x * speed);
+        this.pos.y += (this.dir.y * speed);
     };
     CircleMovingEntity.prototype.draw = function () {
         var canvasContext = this.canvasUtils.getCanvasContext();
         canvasContext.save();
         canvasContext.beginPath();
-        canvasContext.arc(this.posX, this.posY, this.radius, 0, 2 * Math.PI);
+        canvasContext.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
         canvasContext.strokeStyle = this.color;
         canvasContext.stroke();
         canvasContext.fillStyle = this.color;
@@ -160,34 +173,34 @@ var Bullet = /** @class */ (function (_super) {
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
+/// <reference path="utils.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, 50, 50, 0, 0, "green", 2, 3, 10) || this;
-        _this.lastDirX = 0;
-        _this.lastDirY = -1;
+        _this.lastDir = new Point(0, -1);
         _this.moveLeft = function () {
-            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.posX, _this.moveSpeed, _this.radius)) {
-                _this.dirX = -1;
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.pos.x, _this.moveSpeed, _this.radius)) {
+                _this.dir.x = -1;
             }
         };
         _this.moveRight = function () {
-            if (!_this.canvasUtils.outOfBoundsRight(_this.posX, _this.moveSpeed, _this.radius)) {
-                _this.dirX = 1;
+            if (!_this.canvasUtils.outOfBoundsRight(_this.pos.x, _this.moveSpeed, _this.radius)) {
+                _this.dir.x = 1;
             }
         };
         _this.moveUp = function () {
-            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.posY, _this.moveSpeed, _this.radius)) {
-                _this.dirY = -1;
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.pos.y, _this.moveSpeed, _this.radius)) {
+                _this.dir.y = -1;
             }
         };
         _this.moveDown = function () {
-            if (!_this.canvasUtils.outOfBoundsBottom(_this.posY, _this.moveSpeed, _this.radius)) {
-                _this.dirY = 1;
+            if (!_this.canvasUtils.outOfBoundsBottom(_this.pos.y, _this.moveSpeed, _this.radius)) {
+                _this.dir.y = 1;
             }
         };
         _this.fireShot = function () {
-            _this.bullets.push(new Bullet(_this.posX, _this.posY, _this.lastDirX, _this.lastDirY));
+            _this.bullets.push(new Bullet(_this.pos.x, _this.pos.y, _this.lastDir.x, _this.lastDir.y));
         };
         _this.canvasUtils = CanvasUtils.getInstance();
         _this.bullets = [];
@@ -196,14 +209,14 @@ var Player = /** @class */ (function (_super) {
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
         // If there is a direction to save
-        if (this.dirX != 0 || this.dirY != 0) {
+        if (this.dir.x != 0 || this.dir.y != 0) {
             // Save current direction for bullets next frame
-            this.lastDirX = this.dirX;
-            this.lastDirY = this.dirY;
+            this.lastDir.x = this.dir.x;
+            this.lastDir.y = this.dir.y;
         }
         // Clear current dir to stop player moving into next frame
-        this.dirX = 0;
-        this.dirY = 0;
+        this.dir.x = 0;
+        this.dir.y = 0;
         // Remove any dead bullets (outside of canvas)
         for (var i = 0; i < this.bullets.length; i++) {
             if (!this.bullets[i].alive) {
