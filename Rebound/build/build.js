@@ -159,17 +159,34 @@ var GameState = /** @class */ (function () {
             // Repeat this function to loop
             requestAnimationFrame(_this.gameLoop);
         };
+        // Get reference to canvas element
         var cvs = document.getElementById("game-canvas");
         if (cvs instanceof HTMLCanvasElement) {
             this.canvas = cvs;
         }
+        // Get ref to canvas context
         var ctx = this.canvas.getContext("2d");
         if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
         }
-        this.resize();
+        // Resize canvas based on current window dimensions
+        this.resizeCanvas();
+        // Init player
         this.player = new Player();
+        // Init keyboard input manager class
         this.keyInput = new KeyboardInput();
+        this.defineInputActions();
+    }
+    GameState.prototype.resizeCanvas = function () {
+        var canvasWrapper = document.getElementById("game-container");
+        if (this.canvas && canvasWrapper) {
+            var wrapperBounds = canvasWrapper.getBoundingClientRect();
+            this.canvas.width = wrapperBounds.width;
+            this.canvas.height = wrapperBounds.height;
+            console.log("canvas w: " + this.canvas.width);
+        }
+    };
+    GameState.prototype.defineInputActions = function () {
         // Add movement functions as callbacks
         // Left arrow / a
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
@@ -185,15 +202,6 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
-    }
-    GameState.prototype.resize = function () {
-        var canvasWrapper = document.getElementById("game-container");
-        if (this.canvas && canvasWrapper) {
-            var wrapperBounds = canvasWrapper.getBoundingClientRect();
-            this.canvas.width = wrapperBounds.width;
-            this.canvas.height = wrapperBounds.height;
-            console.log("canvas w: " + this.canvas.width);
-        }
     };
     GameState.prototype.updateAll = function () {
         this.player.update();

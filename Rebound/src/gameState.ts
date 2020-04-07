@@ -9,21 +9,36 @@ class GameState {
     public canvasContext: any;
 
     constructor() {
+        // Get reference to canvas element
         let cvs = <HTMLCanvasElement>document.getElementById("game-canvas");
         if (cvs instanceof HTMLCanvasElement) {
             this.canvas = cvs;
         }
-
+        // Get ref to canvas context
         let ctx = this.canvas.getContext("2d");
         if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
         }
-
-        this.resize();
-
+        // Resize canvas based on current window dimensions
+        this.resizeCanvas();
+        // Init player
         this.player = new Player();
+        // Init keyboard input manager class
         this.keyInput = new KeyboardInput();
+        this.defineInputActions();
+    }
 
+    public resizeCanvas() {
+        let canvasWrapper = document.getElementById("game-container");
+        if (this.canvas && canvasWrapper) {
+            let wrapperBounds = canvasWrapper.getBoundingClientRect();
+            this.canvas.width = wrapperBounds.width;
+            this.canvas.height = wrapperBounds.height;
+            console.log(`canvas w: ${this.canvas.width}`);
+        }
+    }
+
+    private defineInputActions(): void {
         // Add movement functions as callbacks
         // Left arrow / a
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
@@ -39,16 +54,6 @@ class GameState {
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
-    }
-
-    public resize() {
-        let canvasWrapper = document.getElementById("game-container");
-        if (this.canvas && canvasWrapper) {
-            let wrapperBounds = canvasWrapper.getBoundingClientRect();
-            this.canvas.width = wrapperBounds.width;
-            this.canvas.height = wrapperBounds.height;
-            console.log(`canvas w: ${this.canvas.width}`);
-        }
     }
 
     public updateAll(): void {
