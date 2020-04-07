@@ -2,6 +2,7 @@
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="bumpers.ts" />
+/// <reference path="utils.ts" />
 
 class GameState {
     public canvasUtils: CanvasUtils;
@@ -38,13 +39,38 @@ class GameState {
     }
 
     private setupBumpers(): void {
-        this.bumpers.push(new CircleBumper(new Point(500, 400), "orange", 5, 50));
+        this.bumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
+        this.bumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
+        this.bumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
+        this.bumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
     }
 
     public updateAll(): void {
+        // Collision checks
+        if (this.player.bullets.length > 0) {
+            for (let bullet of this.player.bullets) {
+                // Check for bumper collisions
+                for (let bumper of this.bumpers) {
+                    if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
+                        // Adjust bullet position by collision normal to prevent further collisions
+                        let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
+                        colNormal.x *= bullet.moveSpeed;
+                        colNormal.y *= bullet.moveSpeed;
+                        bullet.position.x = bullet.position.x - colNormal.x;
+                        bullet.position.y = bullet.position.y - colNormal.y;
+                        // Adjust bullet direction 
+                    }
+                }
+            }
+        }
         // Update player
         this.player.update();
     }
+
+
 
     public renderAll(): void {
         // Render player

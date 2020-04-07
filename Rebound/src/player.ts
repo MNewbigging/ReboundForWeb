@@ -37,10 +37,10 @@ class Player extends CircleMovingEntity {
     }
 
     public fireShot = (): void => {
-        let playerToMouse: Point = Point.Subtract(this.canvasUtils.getMousePos(), this.position);
-        let normDir: Point = Point.Normalize(playerToMouse);
-
-        this.bullets.push(new Bullet(new Point(this.position.x, this.position.y), normDir));
+        this.bullets.push(new Bullet(
+            new Point(this.position.x, this.position.y), 
+            Utils.getTargetDirectionNormal(this.canvasUtils.getMousePos(), this.position)
+        ));
     }
 
     update(): void {

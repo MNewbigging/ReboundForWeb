@@ -25,11 +25,20 @@ var Point = /** @class */ (function () {
         return new Point(left.x - right.x, left.y - right.y);
     };
     Point.Length = function (point) {
-        return Math.sqrt((point.x * point.x) + (point.y * point.y));
+        return Math.sqrt(Point.LengthSq(point));
+    };
+    Point.LengthSq = function (point) {
+        return (point.x * point.x) + (point.y * point.y);
     };
     Point.Normalize = function (point) {
         var length = this.Length(point);
         return new Point(point.x / length, point.y / length);
+    };
+    Point.Dot = function (p1, p2) {
+        return (p1.x * p2.x) + (p1.y * p2.y);
+    };
+    Point.Reflect = function (p1, p2) {
+        return new Point();
     };
     Point.Print = function (point, pre) {
         if (!pre) {
@@ -38,6 +47,20 @@ var Point = /** @class */ (function () {
         console.log(pre + " (" + point.x + ", " + point.y + ")");
     };
     return Point;
+}());
+var Utils = /** @class */ (function () {
+    function Utils() {
+    }
+    Utils.getTargetDirectionNormal = function (target, position) {
+        var positionToTarget = Point.Subtract(target, position);
+        return Point.Normalize(positionToTarget);
+    };
+    Utils.CirclesIntersect = function (c1pos, c1r, c2pos, c2r) {
+        var distance = Point.Subtract(c1pos, c2pos);
+        var radii = c1r + c2r;
+        return Point.LengthSq(distance) < radii * radii;
+    };
+    return Utils;
 }());
 /// <reference path="utils.ts" />
 var CanvasUtils = /** @class */ (function () {
@@ -177,6 +200,9 @@ var Bullet = /** @class */ (function (_super) {
     }
     Bullet.prototype.update = function () {
         _super.prototype.update.call(this);
+        this.checkIfOutOfBounds();
+    };
+    Bullet.prototype.checkIfOutOfBounds = function () {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
@@ -230,9 +256,7 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            var playerToMouse = Point.Subtract(_this.canvasUtils.getMousePos(), _this.position);
-            var normDir = Point.Normalize(playerToMouse);
-            _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), normDir));
+            _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), Utils.getTargetDirectionNormal(_this.canvasUtils.getMousePos(), _this.position)));
         };
         _this.bullets = [];
         return _this;
@@ -300,6 +324,7 @@ var KeyboardInput = /** @class */ (function () {
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="bumpers.ts" />
+/// <reference path="utils.ts" />
 var GameState = /** @class */ (function () {
     function GameState() {
         var _this = this;
@@ -341,9 +366,34 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
     GameState.prototype.setupBumpers = function () {
-        this.bumpers.push(new CircleBumper(new Point(500, 400), "orange", 5, 50));
+        this.bumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
+        this.bumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
+        this.bumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
+        this.bumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
+        this.bumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
     };
     GameState.prototype.updateAll = function () {
+        // Collision checks
+        if (this.player.bullets.length > 0) {
+            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
+                var bullet = _a[_i];
+                // Check for bumper collisions
+                for (var _b = 0, _c = this.bumpers; _b < _c.length; _b++) {
+                    var bumper = _c[_b];
+                    if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
+                        // Adjust bullet position by collision normal to prevent further collisions
+                        var colNormal = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
+                        colNormal.x *= bullet.moveSpeed;
+                        colNormal.y *= bullet.moveSpeed;
+                        bullet.position.x = bullet.position.x - colNormal.x;
+                        bullet.position.y = bullet.position.y - colNormal.y;
+                        // Adjust bullet direction 
+                    }
+                }
+            }
+        }
         // Update player
         this.player.update();
     };

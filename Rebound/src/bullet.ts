@@ -15,6 +15,10 @@ class Bullet extends CircleMovingEntity {
     update(): void {
         super.update();
 
+        this.checkIfOutOfBounds();
+    }
+
+    private checkIfOutOfBounds(): void {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
@@ -27,6 +31,5 @@ class Bullet extends CircleMovingEntity {
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        
     }
 }

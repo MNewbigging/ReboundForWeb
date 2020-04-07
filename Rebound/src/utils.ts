@@ -15,7 +15,11 @@ class Point {
     }
 
     public static Length(point: Point): number {
-        return Math.sqrt((point.x * point.x) + (point.y * point.y));
+        return Math.sqrt(Point.LengthSq(point));
+    }
+
+    public static LengthSq(point: Point): number {
+        return (point.x * point.x) + (point.y * point.y);
     }
 
     public static Normalize(point: Point): Point {
@@ -23,10 +27,32 @@ class Point {
         return new Point(point.x / length, point.y / length);
     }
 
+    public static Dot(p1: Point, p2: Point): number {
+        return (p1.x * p2.x) + (p1.y * p2.y);
+    }
+
+    public static Reflect(p1: Point, p2: Point): Point {
+        return new Point();
+    }
+
     public static Print(point: Point, pre?: string): void {
         if (!pre) {
             pre = "";
         }
         console.log(`${pre} (${point.x}, ${point.y})`);
+    }
+}
+
+class Utils {
+    public static getTargetDirectionNormal(target: Point, position: Point): Point {
+        let positionToTarget: Point = Point.Subtract(target, position);
+        return Point.Normalize(positionToTarget);
+    }
+
+    public static CirclesIntersect(c1pos: Point, c1r: number, c2pos: Point, c2r: number): boolean {
+        let distance: Point = Point.Subtract(c1pos, c2pos);
+        let radii: number = c1r + c2r;
+        
+        return Point.LengthSq(distance) < radii * radii;
     }
 }
