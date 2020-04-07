@@ -4,20 +4,22 @@
 class GameState {
     public player: Player;
     public keyInput: KeyboardInput;
-    public canvas: HTMLCanvasElement;
-    // Any isn't nice, but can't have CanvasRenderingContext2d as null/un-initialised in same fashion 
+    // Any isn't nice, can't have it un-initialised or potentially null
+    public canvas: any;
     public canvasContext: any;
 
-    constructor(cnvs: HTMLCanvasElement) {
-        this.canvas = cnvs;
+    constructor() {
+        let cvs = <HTMLCanvasElement>document.getElementById("game-canvas");
+        if (cvs instanceof HTMLCanvasElement) {
+            this.canvas = cvs;
+        }
+
         let ctx = this.canvas.getContext("2d");
         if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
         }
-        else {
-            // Couldn't get canvas context; can't draw, stop here
-            console.log("ERROR: can't get canvas context");
-        }
+
+        this.resize();
 
         this.player = new Player();
         this.keyInput = new KeyboardInput();

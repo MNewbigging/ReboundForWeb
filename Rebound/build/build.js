@@ -116,7 +116,7 @@ var KeyboardInput = /** @class */ (function () {
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
 var GameState = /** @class */ (function () {
-    function GameState(cnvs) {
+    function GameState() {
         var _this = this;
         // Main game logic loop
         this.gameLoop = function () {
@@ -128,15 +128,15 @@ var GameState = /** @class */ (function () {
             // Player
             _this.player.shape.draw(_this.canvasContext);
         };
-        this.canvas = cnvs;
+        var cvs = document.getElementById("game-canvas");
+        if (cvs instanceof HTMLCanvasElement) {
+            this.canvas = cvs;
+        }
         var ctx = this.canvas.getContext("2d");
         if (ctx instanceof CanvasRenderingContext2D) {
             this.canvasContext = ctx;
         }
-        else {
-            // Couldn't get canvas context; can't draw, stop here
-            console.log("ERROR: can't get canvas context");
-        }
+        this.resize();
         this.player = new Player();
         this.keyInput = new KeyboardInput();
         // Add movement functions as callbacks
@@ -167,20 +167,7 @@ var GameState = /** @class */ (function () {
 /// <reference path="gamestate.ts" />
 var gameState;
 window.onload = function () {
-    var canvas = document.getElementById("game-canvas");
-    var canvasWrapper = document.getElementById("game-container");
-    if (canvas && canvasWrapper) {
-        var wrapperBounds = canvasWrapper.getBoundingClientRect();
-        canvas.width = wrapperBounds.width;
-        canvas.height = wrapperBounds.height;
-        gameState = new GameState(canvas);
-        setInterval(gameState.gameLoop, 10);
-    }
-    else {
-        console.log("ERROR: couldn't find canvas element");
-    }
-};
-window.onresize = function () {
-    this.gameState.resize();
+    gameState = new GameState();
+    setInterval(gameState.gameLoop, 10);
 };
 //# sourceMappingURL=build.js.map
