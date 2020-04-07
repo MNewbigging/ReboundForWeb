@@ -2,6 +2,10 @@ class CanvasUtils {
     private static instance: CanvasUtils;
     private canvas: any;
     private canvasContext: any;
+    private mouseOffsetLeft: number = 0;
+    private mouseOffsetTop: number = 0;
+    private mousePosX: number = 0;
+    private mousePosY: number = 0;
 
     public static getInstance(): CanvasUtils {
         if (!this.instance) {
@@ -20,14 +24,14 @@ class CanvasUtils {
 
     private constructor() {
         this.setupCanvas();
+        document.addEventListener('mousemove', this.getMousePos);
     }
-
 
     private setupCanvas(): void {
         // Get reference to canvas element
         let cvs = <HTMLCanvasElement>document.getElementById("game-canvas");
         if (cvs instanceof HTMLCanvasElement) {
-            this.canvas = cvs;
+            this.canvas = cvs;            
         }
         // Get ref to canvas context
         let ctx = this.canvas.getContext("2d");
@@ -41,9 +45,18 @@ class CanvasUtils {
             let wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
-            console.log(`canvas w: ${this.canvas.width}`);
+
+            let canvasBounds = this.canvas.getBoundingClientRect();
+            this.mouseOffsetLeft = canvasBounds.left;
+            this.mouseOffsetTop = canvasBounds.top;
         }
     }    
+
+    private getMousePos = (event: MouseEvent): void => {
+        this.mousePosX = event.clientX - this.mouseOffsetLeft;
+        this.mousePosY = event.clientY - this.mouseOffsetTop;
+        console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
+    }
 
     public clearCanvas(): void { 
         this.canvasContext.clearRect(0,0, this.canvas.width, this.canvas.height);

@@ -14,7 +14,18 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var CanvasUtils = /** @class */ (function () {
     function CanvasUtils() {
+        var _this = this;
+        this.mouseOffsetLeft = 0;
+        this.mouseOffsetTop = 0;
+        this.mousePosX = 0;
+        this.mousePosY = 0;
+        this.getMousePos = function (event) {
+            _this.mousePosX = event.clientX - _this.mouseOffsetLeft;
+            _this.mousePosY = event.clientY - _this.mouseOffsetTop;
+            console.log("mouse posx: " + _this.mousePosX + " posy: " + _this.mousePosY);
+        };
         this.setupCanvas();
+        document.addEventListener('mousemove', this.getMousePos);
     }
     CanvasUtils.getInstance = function () {
         if (!this.instance) {
@@ -45,7 +56,9 @@ var CanvasUtils = /** @class */ (function () {
             var wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
-            console.log("canvas w: " + this.canvas.width);
+            var canvasBounds = this.canvas.getBoundingClientRect();
+            this.mouseOffsetLeft = canvasBounds.left;
+            this.mouseOffsetTop = canvasBounds.top;
         }
     };
     CanvasUtils.prototype.clearCanvas = function () {
