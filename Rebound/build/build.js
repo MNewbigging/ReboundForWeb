@@ -118,14 +118,29 @@ var CircleMovingEntity = /** @class */ (function () {
 /// <reference path="entities.ts" />
 var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
+    /*
+    +1 to this every rebound; damage can be multiplied rather than if(active) each frame!
+    public damageMultiplier: number = 0;
+    */
     function Bullet(px, py, dx, dy) {
         var _this = _super.call(this, px, py, dx, dy, "red", 1, 20, 5) || this;
-        _this.active = false;
+        _this.alive = true; // does this bullet exist
         return _this;
     }
     Bullet.prototype.update = function () {
-        // Delete bullet if outside of canvas
         _super.prototype.update.call(this);
+        if (this.canvasUtils.outOfBoundsLeftOrTop(this.posX, this.moveSpeed, this.radius)) {
+            this.alive = false;
+        }
+        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.posY, this.moveSpeed, this.radius)) {
+            this.alive = false;
+        }
+        else if (this.canvasUtils.outOfBoundsRight(this.posX, this.moveSpeed, this.radius)) {
+            this.alive = false;
+        }
+        else if (this.canvasUtils.outOfBoundsBottom(this.posY, this.moveSpeed, this.radius)) {
+            this.alive = false;
+        }
     };
     return Bullet;
 }(CircleMovingEntity));
@@ -176,6 +191,12 @@ var Player = /** @class */ (function (_super) {
         // Clear current dir to stop player moving into next frame
         this.dirX = 0;
         this.dirY = 0;
+        // Remove any dead bullets (outside of canvas)
+        for (var i = 0; i < this.bullets.length; i++) {
+            if (!this.bullets[i].alive) {
+                this.bullets.splice(i, 1);
+            }
+        }
     };
     return Player;
 }(CircleMovingEntity));

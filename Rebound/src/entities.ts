@@ -65,4 +65,6 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
         canvasContext.lineWidth = this.lineWidth;
         canvasContext.restore();
     }
+
+    
 }

@@ -57,6 +57,13 @@ class Player extends CircleMovingEntity {
         // Clear current dir to stop player moving into next frame
         this.dirX = 0;
         this.dirY = 0;
+
+        // Remove any dead bullets (outside of canvas)
+        for(let i: number = 0; i < this.bullets.length; i++) {
+            if (!this.bullets[i].alive) {
+                this.bullets.splice(i, 1);
+            }
+        }
     }
 
 }
