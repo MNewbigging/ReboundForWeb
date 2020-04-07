@@ -23,7 +23,10 @@ class Point {
         return new Point(point.x / length, point.y / length);
     }
 
-    public static Print(point: Point): void {
-        console.log(`(${point.x}, ${point.y})`);
+    public static Print(point: Point, pre?: string): void {
+        if (!pre) {
+            pre = "";
+        }
+        console.log(`${pre} (${point.x}, ${point.y})`);
     }
 }

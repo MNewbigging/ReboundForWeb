@@ -31,8 +31,11 @@ var Point = /** @class */ (function () {
         var length = this.Length(point);
         return new Point(point.x / length, point.y / length);
     };
-    Point.Print = function (point) {
-        console.log("(" + point.x + ", " + point.y + ")");
+    Point.Print = function (point, pre) {
+        if (!pre) {
+            pre = "";
+        }
+        console.log(pre + " (" + point.x + ", " + point.y + ")");
     };
     return Point;
 }());
@@ -44,9 +47,15 @@ var CanvasUtils = /** @class */ (function () {
         this.mouseOffsetTop = 0;
         this.mousePos = new Point();
         this.getMouseCanvasPos = function (event) {
+            // coords from event minus canvas margins on page
             _this.mousePos.x = event.clientX - _this.mouseOffsetLeft;
             _this.mousePos.y = event.clientY - _this.mouseOffsetTop;
-            //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
+            // scale mouse coords to match canvas coords
+            var canvasBounds = _this.canvas.getBoundingClientRect();
+            _this.mousePos.x /= canvasBounds.width;
+            _this.mousePos.y /= canvasBounds.height;
+            _this.mousePos.x *= _this.canvas.width;
+            _this.mousePos.y *= _this.canvas.height;
         };
         this.setupCanvas();
         document.addEventListener('mousemove', this.getMouseCanvasPos);
@@ -83,6 +92,7 @@ var CanvasUtils = /** @class */ (function () {
             var wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
+            //this.canvasContext.translate(this.canvas.width / 2, this.canvas.height / 2);
             var canvasBounds = this.canvas.getBoundingClientRect();
             this.mouseOffsetLeft = canvasBounds.left;
             this.mouseOffsetTop = canvasBounds.top;
@@ -193,7 +203,7 @@ var Bullet = /** @class */ (function (_super) {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
-        var _this = _super.call(this, 50, 50, 0, 0, "green", 2, 3, 10) || this;
+        var _this = _super.call(this, 20, 20, 0, 0, "green", 2, 3, 10) || this;
         _this.lastDir = new Point(0, -1);
         _this.moveLeft = function () {
             if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.pos.x, _this.moveSpeed, _this.radius)) {
@@ -216,10 +226,12 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            // normalize(mousePos - playerPos)
+            Point.Print(_this.canvasUtils.getMousePos(), "mouse pos:");
+            Point.Print(_this.pos, "player pos:");
             var playerToMouse = Point.Subtract(_this.canvasUtils.getMousePos(), _this.pos);
+            Point.Print(playerToMouse, "player to mouse");
             var normDir = Point.Normalize(playerToMouse);
-            Point.Print(normDir);
+            Point.Print(normDir, "normalised:");
             _this.bullets.push(new Bullet(_this.pos.x, _this.pos.y, normDir.x, normDir.y));
         };
         _this.canvasUtils = CanvasUtils.getInstance();
@@ -351,7 +363,6 @@ var GameState = /** @class */ (function () {
 var gameState;
 window.onload = function () {
     gameState = new GameState();
-    //setInterval(gameState.gameLoop, 10);
     requestAnimationFrame(gameState.gameLoop);
 };
 //# sourceMappingURL=build.js.map

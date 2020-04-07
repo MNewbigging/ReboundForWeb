@@ -50,6 +50,7 @@ class CanvasUtils {
             let wrapperBounds = canvasWrapper.getBoundingClientRect();
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
+            //this.canvasContext.translate(this.canvas.width / 2, this.canvas.height / 2);
 
             let canvasBounds = this.canvas.getBoundingClientRect();
             this.mouseOffsetLeft = canvasBounds.left;
@@ -58,9 +59,15 @@ class CanvasUtils {
     }    
 
     private getMouseCanvasPos = (event: MouseEvent): void => {
+        // coords from event minus canvas margins on page
         this.mousePos.x = event.clientX - this.mouseOffsetLeft;
         this.mousePos.y = event.clientY - this.mouseOffsetTop;
-        //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
+        // scale mouse coords to match canvas coords
+        let canvasBounds = this.canvas.getBoundingClientRect();
+        this.mousePos.x /= canvasBounds.width;
+        this.mousePos.y /= canvasBounds.height;
+        this.mousePos.x *= this.canvas.width;
+        this.mousePos.y *= this.canvas.height;
     }
 
     public clearCanvas(): void { 

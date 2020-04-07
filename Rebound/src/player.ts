@@ -8,7 +8,7 @@ class Player extends CircleMovingEntity {
     public lastDir: Point = new Point(0, -1);
 
     constructor() {
-        super(50, 50, 0, 0, "green", 2, 3, 10);   
+        super(20, 20, 0, 0, "green", 2, 3, 10);   
         this.canvasUtils = CanvasUtils.getInstance();     
         this.bullets = [];
     }
@@ -38,11 +38,12 @@ class Player extends CircleMovingEntity {
     }
 
     public fireShot = (): void => {
-
-        // normalize(mousePos - playerPos)
+        Point.Print(this.canvasUtils.getMousePos(), "mouse pos:");
+        Point.Print(this.pos, "player pos:");
         let playerToMouse: Point = Point.Subtract(this.canvasUtils.getMousePos(), this.pos);
+        Point.Print(playerToMouse, "player to mouse");
         let normDir: Point = Point.Normalize(playerToMouse);
-        Point.Print(normDir);
+        Point.Print(normDir, "normalised:");
 
         this.bullets.push(new Bullet(
             this.pos.x, this.pos.y, 
