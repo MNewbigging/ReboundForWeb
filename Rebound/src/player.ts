@@ -1,52 +1,47 @@
-/// <reference path="shapes.ts" />
+/// <reference path="entities.ts" />
 
-class Player {
-    public shape: Circle;
-    public moveSpeed: number;
-    public direction = {
-        dirX: 0,
-        dirY: 0
-    };
+class Player extends CircleMovingEntity {
 
     constructor() {
-        this.shape = new Circle(100, 100, 10, "green");
-        this.moveSpeed = 3;
+        super(50, 50, 0, 0, "green", 2, 3, 10);        
     }
 
     public moveLeft = (): void => {
         // Ensure player doesn't leave canvas
-        if (this.shape.x > this.moveSpeed + this.shape.radius) {
-            this.direction.dirX = -1;
+        if (this.posX > this.moveSpeed + this.radius) {
+            this.dirX = -1;
         }    
     }
 
     public moveRight (canvasWidth: number): void {
-        console.log(`player cw: ${canvasWidth}`);
-        if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
-            this.direction.dirX = 1;
+        if (this.posX < canvasWidth - this.moveSpeed - this.radius) {
+            this.dirX = 1;
         }
     }
 
-
     public moveUp = (): void => {
-        if (this.shape.y > this.moveSpeed + this.shape.radius) {
-            this.direction.dirY = -1;
+        if (this.posY > this.moveSpeed + this.radius) {
+            this.dirY = -1;
         }   
     }
 
     public moveDown(canvasHeight: number): void {
-        if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
-            this.direction.dirY = 1;
+        if (this.posY < canvasHeight - this.moveSpeed - this.radius) {
+            this.dirY = 1;
         } 
+    }
+
+    public fireShot(): void {
+        console.log("Pew pew");
     }
 
     public update() { 
         // Check if moving diagonally, cap speed
-        let speed: number = (this.direction.dirX != 0 && this.direction.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
+        let speed: number = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
 
-        this.shape.x += (this.direction.dirX * this.moveSpeed);
-        this.shape.y += (this.direction.dirY * this.moveSpeed);
-        this.direction.dirX = 0;
-        this.direction.dirY = 0;
+        this.posX += (this.dirX * this.moveSpeed);
+        this.posY += (this.dirY * this.moveSpeed);
+        this.dirX = 0;
+        this.dirY = 0;
     }
 }

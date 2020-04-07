@@ -4,7 +4,7 @@
 class GameState {
     public player: Player;
     public keyInput: KeyboardInput;
-    // Any isn't nice, can't have it un-initialised or potentially null
+    // Any isn't nice, can't have it un-initialised or potentially null as desired type though
     public canvas: any;
     public canvasContext: any;
 
@@ -37,6 +37,8 @@ class GameState {
         // down arrow / s
         this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
+        // Fire
+        this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     }
 
     public resize() {
@@ -61,8 +63,7 @@ class GameState {
         this.player.update();
 
         // Render
-        // Player
-        this.player.shape.draw(this.canvasContext);
+        this.player.draw(this.canvasContext);
 
         // Repeat this function to loop
         requestAnimationFrame(this.gameLoop);

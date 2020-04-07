@@ -1,76 +1,95 @@
 "use strict";
-var Circle = /** @class */ (function () {
-    function Circle(x, y, radius, color, lineWidth) {
-        var _this = this;
-        if (color === void 0) { color = "red"; }
-        if (lineWidth === void 0) { lineWidth = 2; }
-        this.x = 0;
-        this.y = 0;
-        this.radius = 10;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var CircleMovingEntity = /** @class */ (function () {
+    function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
+        // IEntity fields
+        this.posX = 0;
+        this.posY = 0;
+        this.color = "black";
         this.lineWidth = 2;
-        this.color = "red";
-        this.draw = function (canvasContext) {
-            canvasContext.save();
-            canvasContext.beginPath();
-            canvasContext.arc(_this.x, _this.y, _this.radius, 0, 2 * Math.PI);
-            canvasContext.strokeStyle = _this.color;
-            canvasContext.stroke();
-            canvasContext.fillStyle = _this.color;
-            canvasContext.fill();
-            canvasContext.lineWidth = _this.lineWidth;
-            canvasContext.restore();
-        };
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
-        this.lineWidth = lineWidth;
+        // IMovingEntity fields
+        this.dirX = 0;
+        this.dirY = 0;
+        this.moveSpeed = 1;
+        // ICircleEntity fields
+        this.radius = 10;
+        this.posX = px;
+        this.posY = py;
+        this.dirX = dx;
+        this.dirY = dy;
+        this.color = col;
+        this.lineWidth = lw;
+        this.moveSpeed = speed;
+        this.radius = r;
     }
-    return Circle;
+    CircleMovingEntity.prototype.update = function () {
+    };
+    CircleMovingEntity.prototype.draw = function (canvasContext) {
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.arc(this.posX, this.posY, this.radius, 0, 2 * Math.PI);
+        canvasContext.strokeStyle = this.color;
+        canvasContext.stroke();
+        canvasContext.fillStyle = this.color;
+        canvasContext.fill();
+        canvasContext.lineWidth = this.lineWidth;
+        canvasContext.restore();
+    };
+    return CircleMovingEntity;
 }());
-/// <reference path="shapes.ts" />
-var Player = /** @class */ (function () {
+/// <reference path="entities.ts" />
+var Player = /** @class */ (function (_super) {
+    __extends(Player, _super);
     function Player() {
-        var _this = this;
-        this.direction = {
-            dirX: 0,
-            dirY: 0
-        };
-        this.moveLeft = function () {
+        var _this = _super.call(this, 50, 50, 0, 0, "green", 2, 3, 10) || this;
+        _this.moveLeft = function () {
             // Ensure player doesn't leave canvas
-            if (_this.shape.x > _this.moveSpeed + _this.shape.radius) {
-                _this.direction.dirX = -1;
+            if (_this.posX > _this.moveSpeed + _this.radius) {
+                _this.dirX = -1;
             }
         };
-        this.moveUp = function () {
-            if (_this.shape.y > _this.moveSpeed + _this.shape.radius) {
-                _this.direction.dirY = -1;
+        _this.moveUp = function () {
+            if (_this.posY > _this.moveSpeed + _this.radius) {
+                _this.dirY = -1;
             }
         };
-        this.shape = new Circle(100, 100, 10, "green");
-        this.moveSpeed = 3;
+        return _this;
     }
     Player.prototype.moveRight = function (canvasWidth) {
-        console.log("player cw: " + canvasWidth);
-        if (this.shape.x < canvasWidth - this.moveSpeed - this.shape.radius) {
-            this.direction.dirX = 1;
+        if (this.posX < canvasWidth - this.moveSpeed - this.radius) {
+            this.dirX = 1;
         }
     };
     Player.prototype.moveDown = function (canvasHeight) {
-        if (this.shape.y < canvasHeight - this.moveSpeed - this.shape.radius) {
-            this.direction.dirY = 1;
+        if (this.posY < canvasHeight - this.moveSpeed - this.radius) {
+            this.dirY = 1;
         }
+    };
+    Player.prototype.fireShot = function () {
+        console.log("Pew pew");
     };
     Player.prototype.update = function () {
         // Check if moving diagonally, cap speed
-        var speed = (this.direction.dirX != 0 && this.direction.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
-        this.shape.x += (this.direction.dirX * this.moveSpeed);
-        this.shape.y += (this.direction.dirY * this.moveSpeed);
-        this.direction.dirX = 0;
-        this.direction.dirY = 0;
+        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.5 : this.moveSpeed;
+        this.posX += (this.dirX * this.moveSpeed);
+        this.posY += (this.dirY * this.moveSpeed);
+        this.dirX = 0;
+        this.dirY = 0;
     };
     return Player;
-}());
+}(CircleMovingEntity));
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
         var _this = this;
@@ -122,8 +141,7 @@ var GameState = /** @class */ (function () {
             // Update
             _this.player.update();
             // Render
-            // Player
-            _this.player.shape.draw(_this.canvasContext);
+            _this.player.draw(_this.canvasContext);
             // Repeat this function to loop
             requestAnimationFrame(_this.gameLoop);
         };
@@ -151,6 +169,8 @@ var GameState = /** @class */ (function () {
         // down arrow / s
         this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
         this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
+        // Fire
+        this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     }
     GameState.prototype.resize = function () {
         var canvasWrapper = document.getElementById("game-container");
