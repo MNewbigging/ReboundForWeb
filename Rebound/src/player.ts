@@ -4,7 +4,7 @@
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
     public lastDirX: number = 0;
-    public lastDirY: number = 0;
+    public lastDirY: number = -1;
 
     constructor() {
         super(50, 50, 0, 0, "green", 2, 3, 10);        
@@ -45,8 +45,15 @@ class Player extends CircleMovingEntity {
 
     update(): void {
         super.update();
-        this.lastDirX = this.dirX;
-        this.lastDirY = this.dirY;
+        
+        // If there is a direction to save
+        if (this.dirX != 0 || this.dirY != 0) {
+            // Save current direction for bullets next frame
+            this.lastDirX = this.dirX;
+            this.lastDirY = this.dirY;
+        }
+
+        // Clear current dir to stop player moving into next frame
         this.dirX = 0;
         this.dirY = 0;
     }

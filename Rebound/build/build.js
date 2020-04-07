@@ -68,7 +68,7 @@ var Player = /** @class */ (function (_super) {
     function Player() {
         var _this = _super.call(this, 50, 50, 0, 0, "green", 2, 3, 10) || this;
         _this.lastDirX = 0;
-        _this.lastDirY = 0;
+        _this.lastDirY = -1;
         _this.moveLeft = function () {
             // Ensure player doesn't leave canvas
             if (_this.posX > _this.moveSpeed + _this.radius) {
@@ -98,8 +98,13 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
-        this.lastDirX = this.dirX;
-        this.lastDirY = this.dirY;
+        // If there is a direction to save
+        if (this.dirX != 0 || this.dirY != 0) {
+            // Save current direction for bullets next frame
+            this.lastDirX = this.dirX;
+            this.lastDirY = this.dirY;
+        }
+        // Clear current dir to stop player moving into next frame
         this.dirX = 0;
         this.dirY = 0;
     };
