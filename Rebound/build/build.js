@@ -12,58 +12,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var CircleMovingEntity = /** @class */ (function () {
-    function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
-        // IEntity fields default values
-        this.posX = 0;
-        this.posY = 0;
-        this.color = "black";
-        this.lineWidth = 2;
-        this.moveSpeed = 2;
-        // ICircleEntity fields default values
-        this.radius = 10;
-        this.posX = px;
-        this.posY = py;
-        this.dirX = dx;
-        this.dirY = dy;
-        this.color = col;
-        this.lineWidth = lw;
-        this.moveSpeed = speed;
-        this.radius = r;
-    }
-    CircleMovingEntity.prototype.update = function () {
-        // Check if moving diagonally, cap speed
-        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        this.posX += (this.dirX * speed);
-        this.posY += (this.dirY * speed);
-    };
-    CircleMovingEntity.prototype.draw = function (canvasContext) {
-        canvasContext.save();
-        canvasContext.beginPath();
-        canvasContext.arc(this.posX, this.posY, this.radius, 0, 2 * Math.PI);
-        canvasContext.strokeStyle = this.color;
-        canvasContext.stroke();
-        canvasContext.fillStyle = this.color;
-        canvasContext.fill();
-        canvasContext.lineWidth = this.lineWidth;
-        canvasContext.restore();
-    };
-    return CircleMovingEntity;
-}());
-/// <reference path="entities.ts" />
-var Bullet = /** @class */ (function (_super) {
-    __extends(Bullet, _super);
-    function Bullet(px, py, dx, dy) {
-        var _this = _super.call(this, px, py, dx, dy, "red", 1, 20, 5) || this;
-        _this.active = false;
-        return _this;
-    }
-    Bullet.prototype.update = function () {
-        // Delete bullet if outside of canvas
-        _super.prototype.update.call(this);
-    };
-    return Bullet;
-}(CircleMovingEntity));
 var CanvasUtils = /** @class */ (function () {
     function CanvasUtils() {
         this.setupCanvas();
@@ -105,8 +53,64 @@ var CanvasUtils = /** @class */ (function () {
     };
     return CanvasUtils;
 }());
+/// <reference path= "canvasUtils.ts" />
+var CircleMovingEntity = /** @class */ (function () {
+    function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
+        // IEntity fields default values
+        this.posX = 0;
+        this.posY = 0;
+        this.color = "black";
+        this.lineWidth = 2;
+        this.moveSpeed = 2;
+        // ICircleEntity fields default values
+        this.radius = 10;
+        this.posX = px;
+        this.posY = py;
+        this.dirX = dx;
+        this.dirY = dy;
+        this.color = col;
+        this.lineWidth = lw;
+        this.moveSpeed = speed;
+        this.radius = r;
+        this.canvasUtils = CanvasUtils.getInstance();
+    }
+    CircleMovingEntity.prototype.update = function () {
+        // Check if moving diagonally, cap speed
+        var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        this.posX += (this.dirX * speed);
+        this.posY += (this.dirY * speed);
+    };
+    CircleMovingEntity.prototype.draw = function () {
+        var canvasContext = this.canvasUtils.getCanvasContext();
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.arc(this.posX, this.posY, this.radius, 0, 2 * Math.PI);
+        canvasContext.strokeStyle = this.color;
+        canvasContext.stroke();
+        canvasContext.fillStyle = this.color;
+        canvasContext.fill();
+        canvasContext.lineWidth = this.lineWidth;
+        canvasContext.restore();
+    };
+    return CircleMovingEntity;
+}());
+/// <reference path="entities.ts" />
+var Bullet = /** @class */ (function (_super) {
+    __extends(Bullet, _super);
+    function Bullet(px, py, dx, dy) {
+        var _this = _super.call(this, px, py, dx, dy, "red", 1, 20, 5) || this;
+        _this.active = false;
+        return _this;
+    }
+    Bullet.prototype.update = function () {
+        // Delete bullet if outside of canvas
+        _super.prototype.update.call(this);
+    };
+    return Bullet;
+}(CircleMovingEntity));
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
+/// <reference path="canvasUtils.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
@@ -119,27 +123,28 @@ var Player = /** @class */ (function (_super) {
                 _this.dirX = -1;
             }
         };
+        _this.moveRight = function () {
+            if (_this.posX < _this.canvasUtils.getCanvas().width - _this.moveSpeed - _this.radius) {
+                _this.dirX = 1;
+            }
+        };
         _this.moveUp = function () {
             if (_this.posY > _this.moveSpeed + _this.radius) {
                 _this.dirY = -1;
             }
         };
+        _this.moveDown = function () {
+            if (_this.posY < _this.canvasUtils.getCanvas().height - _this.moveSpeed - _this.radius) {
+                _this.dirY = 1;
+            }
+        };
         _this.fireShot = function () {
             _this.bullets.push(new Bullet(_this.posX, _this.posY, _this.lastDirX, _this.lastDirY));
         };
+        _this.canvasUtils = CanvasUtils.getInstance();
         _this.bullets = [];
         return _this;
     }
-    Player.prototype.moveRight = function (canvasWidth) {
-        if (this.posX < canvasWidth - this.moveSpeed - this.radius) {
-            this.dirX = 1;
-        }
-    };
-    Player.prototype.moveDown = function (canvasHeight) {
-        if (this.posY < canvasHeight - this.moveSpeed - this.radius) {
-            this.dirY = 1;
-        }
-    };
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
         // If there is a direction to save
@@ -220,14 +225,14 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
         this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
+        this.keyInput.addKeycodeCallback(39, this.player.moveRight);
+        this.keyInput.addKeycodeCallback(68, this.player.moveRight);
         // Up arrow / w
         this.keyInput.addKeycodeCallback(38, this.player.moveUp);
         this.keyInput.addKeycodeCallback(87, this.player.moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
+        this.keyInput.addKeycodeCallback(40, this.player.moveDown);
+        this.keyInput.addKeycodeCallback(83, this.player.moveDown);
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
@@ -244,12 +249,12 @@ var GameState = /** @class */ (function () {
     };
     GameState.prototype.renderAll = function () {
         // Render player
-        this.player.draw(this.canvasUtils.getCanvasContext());
+        this.player.draw();
         // Render player bullets
         if (this.player.bullets.length > 0) {
             for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
                 var bullet = _a[_i];
-                bullet.draw(this.canvasUtils.getCanvasContext());
+                bullet.draw();
             }
         }
     };

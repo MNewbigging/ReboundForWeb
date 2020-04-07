@@ -1,3 +1,5 @@
+/// <reference path= "canvasUtils.ts" />
+
 interface IEntity {
     posX: number;
     posY: number;
@@ -29,6 +31,7 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
     moveSpeed: number = 2;
     // ICircleEntity fields default values
     radius: number = 10;
+    canvasUtils: CanvasUtils;
 
     constructor(px: number, py: number, dx: number, dy: number, 
                 col: string, lw: number, speed: number, r: number) {
@@ -40,6 +43,7 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
         this.lineWidth = lw;
         this.moveSpeed = speed;
         this.radius = r;
+        this.canvasUtils = CanvasUtils.getInstance();
     }
 
     update(): void {
@@ -49,7 +53,8 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
         this.posY += (this.dirY * speed);
     }
 
-    draw(canvasContext: CanvasRenderingContext2D): void {
+    draw(): void {
+        let canvasContext = this.canvasUtils.getCanvasContext();
         canvasContext.save();
         canvasContext.beginPath();
         canvasContext.arc(this.posX, this.posY, this.radius, 0, 2 * Math.PI);

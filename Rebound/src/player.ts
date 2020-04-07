@@ -1,5 +1,6 @@
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
+/// <reference path="canvasUtils.ts" />
 
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
@@ -7,7 +8,8 @@ class Player extends CircleMovingEntity {
     public lastDirY: number = -1;
 
     constructor() {
-        super(50, 50, 0, 0, "green", 2, 3, 10);        
+        super(50, 50, 0, 0, "green", 2, 3, 10);   
+        this.canvasUtils = CanvasUtils.getInstance();     
         this.bullets = [];
     }
 
@@ -18,8 +20,8 @@ class Player extends CircleMovingEntity {
         }    
     }
 
-    public moveRight (canvasWidth: number): void {
-        if (this.posX < canvasWidth - this.moveSpeed - this.radius) {
+    public moveRight = (): void => {
+        if (this.posX < this.canvasUtils.getCanvas().width - this.moveSpeed - this.radius) {
             this.dirX = 1;
         }
     }
@@ -30,8 +32,8 @@ class Player extends CircleMovingEntity {
         }   
     }
 
-    public moveDown(canvasHeight: number): void {
-        if (this.posY < canvasHeight - this.moveSpeed - this.radius) {
+    public moveDown = (): void => {
+        if (this.posY < this.canvasUtils.getCanvas().height - this.moveSpeed - this.radius) {
             this.dirY = 1;
         } 
     }
