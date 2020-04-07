@@ -1,17 +1,21 @@
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
+/// <reference path="bumpers.ts" />
 
 class GameState {
     public canvasUtils: CanvasUtils;
     public keyInput: KeyboardInput;
     public player: Player;
+    private bumpers: CircleBumper[];
 
     constructor() {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
         this.player = new Player();
-        
+        this.bumpers = [];
+
+        this.setupBumpers();
         this.defineInputActions();
     }
 
@@ -33,6 +37,10 @@ class GameState {
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     }
 
+    private setupBumpers(): void {
+        this.bumpers.push(new CircleBumper(new Point(500, 400), "orange", 5, 50));
+    }
+
     public updateAll(): void {
         // Update player
         this.player.update();
@@ -47,6 +55,11 @@ class GameState {
             for(let bullet of this.player.bullets) {
                 bullet.draw();
             }
+        }
+
+        // Render bumpers
+        for(let bumper of this.bumpers) {
+            bumper.draw();
         }
     }
 

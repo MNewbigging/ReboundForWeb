@@ -9,7 +9,7 @@ class Bullet extends CircleMovingEntity {
     */
 
     constructor(p: Point, dir: Point) {
-        super(p, "red", 1, 5, dir, 5);
+        super(p, "red", 1, 5, dir, 10);
     }    
 
     update(): void {

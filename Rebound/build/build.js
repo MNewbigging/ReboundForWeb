@@ -171,7 +171,7 @@ var Bullet = /** @class */ (function (_super) {
     public damageMultiplier: number = 0;
     */
     function Bullet(p, dir) {
-        var _this = _super.call(this, p, "red", 1, 5, dir, 5) || this;
+        var _this = _super.call(this, p, "red", 1, 5, dir, 10) || this;
         _this.alive = true; // does this bullet exist
         return _this;
     }
@@ -192,6 +192,14 @@ var Bullet = /** @class */ (function (_super) {
     };
     return Bullet;
 }(CircleMovingEntity));
+/// <reference path="entities.ts" />
+var CircleBumper = /** @class */ (function (_super) {
+    __extends(CircleBumper, _super);
+    function CircleBumper() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return CircleBumper;
+}(CircleEntity));
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
@@ -291,6 +299,7 @@ var KeyboardInput = /** @class */ (function () {
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
+/// <reference path="bumpers.ts" />
 var GameState = /** @class */ (function () {
     function GameState() {
         var _this = this;
@@ -310,6 +319,8 @@ var GameState = /** @class */ (function () {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
         this.player = new Player();
+        this.bumpers = [];
+        this.setupBumpers();
         this.defineInputActions();
     }
     GameState.prototype.defineInputActions = function () {
@@ -329,6 +340,9 @@ var GameState = /** @class */ (function () {
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
+    GameState.prototype.setupBumpers = function () {
+        this.bumpers.push(new CircleBumper(new Point(500, 400), "orange", 5, 50));
+    };
     GameState.prototype.updateAll = function () {
         // Update player
         this.player.update();
@@ -342,6 +356,11 @@ var GameState = /** @class */ (function () {
                 var bullet = _a[_i];
                 bullet.draw();
             }
+        }
+        // Render bumpers
+        for (var _b = 0, _c = this.bumpers; _b < _c.length; _b++) {
+            var bumper = _c[_b];
+            bumper.draw();
         }
     };
     return GameState;
