@@ -51,6 +51,27 @@ var CanvasUtils = /** @class */ (function () {
     CanvasUtils.prototype.clearCanvas = function () {
         this.canvasContext.clearRect(0, 0, this.canvas.width, this.canvas.height);
     };
+    CanvasUtils.prototype.outOfBoundsLeftOrTop = function (pos, moveSpeed, radius) {
+        var step = moveSpeed + radius;
+        if (pos < step) {
+            return true;
+        }
+        return false;
+    };
+    CanvasUtils.prototype.outOfBoundsRight = function (posX, moveSpeed, radius) {
+        var step = moveSpeed + radius;
+        if (posX > this.canvas.width - step) {
+            return true;
+        }
+        return false;
+    };
+    CanvasUtils.prototype.outOfBoundsBottom = function (posY, moveSpeed, radius) {
+        var step = moveSpeed + radius;
+        if (posY > this.canvas.height - step) {
+            return true;
+        }
+        return false;
+    };
     return CanvasUtils;
 }());
 /// <reference path= "canvasUtils.ts" />
@@ -118,23 +139,22 @@ var Player = /** @class */ (function (_super) {
         _this.lastDirX = 0;
         _this.lastDirY = -1;
         _this.moveLeft = function () {
-            // Ensure player doesn't leave canvas
-            if (_this.posX > _this.moveSpeed + _this.radius) {
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.posX, _this.moveSpeed, _this.radius)) {
                 _this.dirX = -1;
             }
         };
         _this.moveRight = function () {
-            if (_this.posX < _this.canvasUtils.getCanvas().width - _this.moveSpeed - _this.radius) {
+            if (!_this.canvasUtils.outOfBoundsRight(_this.posX, _this.moveSpeed, _this.radius)) {
                 _this.dirX = 1;
             }
         };
         _this.moveUp = function () {
-            if (_this.posY > _this.moveSpeed + _this.radius) {
+            if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.posY, _this.moveSpeed, _this.radius)) {
                 _this.dirY = -1;
             }
         };
         _this.moveDown = function () {
-            if (_this.posY < _this.canvasUtils.getCanvas().height - _this.moveSpeed - _this.radius) {
+            if (!_this.canvasUtils.outOfBoundsBottom(_this.posY, _this.moveSpeed, _this.radius)) {
                 _this.dirY = 1;
             }
         };

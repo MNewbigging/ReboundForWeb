@@ -14,26 +14,25 @@ class Player extends CircleMovingEntity {
     }
 
     public moveLeft = (): void => {
-        // Ensure player doesn't leave canvas
-        if (this.posX > this.moveSpeed + this.radius) {
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.posX, this.moveSpeed, this.radius)) {
             this.dirX = -1;
-        }    
+        }
     }
 
     public moveRight = (): void => {
-        if (this.posX < this.canvasUtils.getCanvas().width - this.moveSpeed - this.radius) {
+        if (!this.canvasUtils.outOfBoundsRight(this.posX, this.moveSpeed, this.radius)) {
             this.dirX = 1;
         }
     }
 
     public moveUp = (): void => {
-        if (this.posY > this.moveSpeed + this.radius) {
+        if (!this.canvasUtils.outOfBoundsLeftOrTop(this.posY, this.moveSpeed, this.radius)) {
             this.dirY = -1;
         }   
     }
 
     public moveDown = (): void => {
-        if (this.posY < this.canvasUtils.getCanvas().height - this.moveSpeed - this.radius) {
+        if (!this.canvasUtils.outOfBoundsBottom(this.posY, this.moveSpeed, this.radius)) {
             this.dirY = 1;
         } 
     }

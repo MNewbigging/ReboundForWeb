@@ -8,6 +8,7 @@ class Bullet extends CircleMovingEntity {
     }
 
     update(): void {
+        
         // Delete bullet if outside of canvas
         super.update();
     }

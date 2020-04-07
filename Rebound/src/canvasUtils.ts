@@ -13,7 +13,7 @@ class CanvasUtils {
     public getCanvas(): HTMLCanvasElement {
         return this.canvas;
     }
-    
+
     public getCanvasContext(): CanvasRenderingContext2D {
         return this.canvasContext;
     }
@@ -48,5 +48,30 @@ class CanvasUtils {
     public clearCanvas(): void { 
         this.canvasContext.clearRect(0,0, this.canvas.width, this.canvas.height);
     }
+
+    public outOfBoundsLeftOrTop(pos: number, moveSpeed: number, radius: number): boolean {
+        let step: number = moveSpeed + radius;
+        if (pos < step) {
+            return true;
+        }
+        return false;
+    }
+
+    public outOfBoundsRight(posX: number, moveSpeed: number, radius: number): boolean {
+        let step: number = moveSpeed + radius;
+        if (posX > this.canvas.width - step) {
+            return true;
+        }
+        return false;
+    }
+
+    public outOfBoundsBottom(posY: number, moveSpeed: number, radius: number): boolean {
+        let step: number = moveSpeed + radius;
+        if (posY > this.canvas.height - step) {
+            return true;
+        }
+        return false;
+    }
+
     
 }
