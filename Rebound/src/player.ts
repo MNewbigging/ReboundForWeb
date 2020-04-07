@@ -1,9 +1,12 @@
 /// <reference path="entities.ts" />
+/// <reference path="bullet.ts" />
 
 class Player extends CircleMovingEntity {
+    public bullets: Bullet[];
 
     constructor() {
         super(50, 50, 0, 0, "green", 2, 3, 10);        
+        this.bullets = [];
     }
 
     public moveLeft = (): void => {
@@ -31,8 +34,11 @@ class Player extends CircleMovingEntity {
         } 
     }
 
-    public fireShot(): void {
-        console.log("Pew pew");
+    public fireShot = (): void => {
+        this.bullets.push(new Bullet(
+            this.posX, this.posY, 
+            this.dirX, this.dirY
+        ));
     }
 
     update(): void { 

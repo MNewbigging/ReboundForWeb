@@ -14,16 +14,16 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var CircleMovingEntity = /** @class */ (function () {
     function CircleMovingEntity(px, py, dx, dy, col, lw, speed, r) {
-        // IEntity fields
+        // IEntity fields default values
         this.posX = 0;
         this.posY = 0;
         this.color = "black";
         this.lineWidth = 2;
-        // IMovingEntity fields
+        // IMovingEntity fields default values
         this.dirX = 0;
         this.dirY = 0;
         this.moveSpeed = 1;
-        // ICircleEntity fields
+        // ICircleEntity fields default values
         this.radius = 10;
         this.posX = px;
         this.posY = py;
@@ -56,6 +56,18 @@ var CircleMovingEntity = /** @class */ (function () {
     return CircleMovingEntity;
 }());
 /// <reference path="entities.ts" />
+var Bullet = /** @class */ (function (_super) {
+    __extends(Bullet, _super);
+    function Bullet(px, py, dx, dy) {
+        var _this = _super.call(this, px, py, dx, dy, "red", 1, 5, 5) || this;
+        _this.lifetime = 100;
+        _this.active = false;
+        return _this;
+    }
+    return Bullet;
+}(CircleMovingEntity));
+/// <reference path="entities.ts" />
+/// <reference path="bullet.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
@@ -71,6 +83,10 @@ var Player = /** @class */ (function (_super) {
                 _this.dirY = -1;
             }
         };
+        _this.fireShot = function () {
+            _this.bullets.push(new Bullet(_this.posX, _this.posY, _this.dirX, _this.dirY));
+        };
+        _this.bullets = [];
         return _this;
     }
     Player.prototype.moveRight = function (canvasWidth) {
@@ -82,9 +98,6 @@ var Player = /** @class */ (function (_super) {
         if (this.posY < canvasHeight - this.moveSpeed - this.radius) {
             this.dirY = 1;
         }
-    };
-    Player.prototype.fireShot = function () {
-        console.log("Pew pew");
     };
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
@@ -140,9 +153,9 @@ var GameState = /** @class */ (function () {
             // Player input 
             _this.keyInput.inputLoop();
             // Update
-            _this.player.update();
+            _this.updateAll();
             // Render
-            _this.player.draw(_this.canvasContext);
+            _this.renderAll();
             // Repeat this function to loop
             requestAnimationFrame(_this.gameLoop);
         };
@@ -180,6 +193,20 @@ var GameState = /** @class */ (function () {
             this.canvas.width = wrapperBounds.width;
             this.canvas.height = wrapperBounds.height;
             console.log("canvas w: " + this.canvas.width);
+        }
+    };
+    GameState.prototype.updateAll = function () {
+        this.player.update();
+    };
+    GameState.prototype.renderAll = function () {
+        // Render player
+        this.player.draw(this.canvasContext);
+        // Render player bullets
+        if (this.player.bullets.length > 0) {
+            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
+                var bullet = _a[_i];
+                bullet.draw(this.canvasContext);
+            }
         }
     };
     return GameState;

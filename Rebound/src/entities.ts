@@ -18,16 +18,16 @@ interface ICircleEntity {
 }
 
 class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
-    // IEntity fields
+    // IEntity fields default values
     posX: number = 0;
     posY: number = 0;
     color: string = "black";
     lineWidth: number =  2;
-    // IMovingEntity fields
+    // IMovingEntity fields default values
     dirX: number = 0;
     dirY: number = 0;
     moveSpeed: number = 1;
-    // ICircleEntity fields
+    // ICircleEntity fields default values
     radius: number = 10;
 
     constructor(px: number, py: number, dx: number, dy: number, 

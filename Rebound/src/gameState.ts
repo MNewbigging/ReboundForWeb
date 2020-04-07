@@ -51,6 +51,22 @@ class GameState {
         }
     }
 
+    public updateAll(): void {
+        this.player.update();
+    }
+
+    public renderAll(): void {
+        // Render player
+        this.player.draw(this.canvasContext);
+
+        // Render player bullets
+        if (this.player.bullets.length > 0) {
+            for(let bullet of this.player.bullets) {
+                bullet.draw(this.canvasContext);
+            }
+        }
+    }
+
     // Main game logic loop
     public gameLoop = (): void => {
         // Clear the canvas
@@ -60,11 +76,11 @@ class GameState {
         this.keyInput.inputLoop();
 
         // Update
-        this.player.update();
+        this.updateAll();
 
         // Render
-        this.player.draw(this.canvasContext);
-
+        this.renderAll();
+ 
         // Repeat this function to loop
         requestAnimationFrame(this.gameLoop);
     }
