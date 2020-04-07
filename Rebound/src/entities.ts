@@ -24,9 +24,9 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
     color: string = "black";
     lineWidth: number =  2;
     // IMovingEntity fields default values
-    dirX: number = 0;
-    dirY: number = 0;
-    moveSpeed: number = 1;
+    dirX: number;
+    dirY: number;
+    moveSpeed: number = 2;
     // ICircleEntity fields default values
     radius: number = 10;
 
@@ -47,8 +47,6 @@ class CircleMovingEntity implements IEntity, IMovingEntity, ICircleEntity {
         let speed: number = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         this.posX += (this.dirX * speed);
         this.posY += (this.dirY * speed);
-        this.dirX = 0;
-        this.dirY = 0;
     }
 
     draw(canvasContext: CanvasRenderingContext2D): void {

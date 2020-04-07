@@ -13,7 +13,6 @@ class KeyboardInput {
 
     public addKeycodeCallback (keycode: number, action: KeyboardInputCallback): void {
         this.keyCallback[keycode] = action;
-        this.keyDown[keycode] = false; // need this?
     }
 
     public keyboardDown = (event: KeyboardEvent): void => {

@@ -19,10 +19,7 @@ var CircleMovingEntity = /** @class */ (function () {
         this.posY = 0;
         this.color = "black";
         this.lineWidth = 2;
-        // IMovingEntity fields default values
-        this.dirX = 0;
-        this.dirY = 0;
-        this.moveSpeed = 1;
+        this.moveSpeed = 2;
         // ICircleEntity fields default values
         this.radius = 10;
         this.posX = px;
@@ -39,8 +36,6 @@ var CircleMovingEntity = /** @class */ (function () {
         var speed = (this.dirX != 0 && this.dirY != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         this.posX += (this.dirX * speed);
         this.posY += (this.dirY * speed);
-        this.dirX = 0;
-        this.dirY = 0;
     };
     CircleMovingEntity.prototype.draw = function (canvasContext) {
         canvasContext.save();
@@ -72,6 +67,8 @@ var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, 50, 50, 0, 0, "green", 2, 3, 10) || this;
+        _this.lastDirX = 0;
+        _this.lastDirY = 0;
         _this.moveLeft = function () {
             // Ensure player doesn't leave canvas
             if (_this.posX > _this.moveSpeed + _this.radius) {
@@ -84,7 +81,7 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            _this.bullets.push(new Bullet(_this.posX, _this.posY, _this.dirX, _this.dirY));
+            _this.bullets.push(new Bullet(_this.posX, _this.posY, _this.lastDirX, _this.lastDirY));
         };
         _this.bullets = [];
         return _this;
@@ -101,6 +98,10 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
+        this.lastDirX = this.dirX;
+        this.lastDirY = this.dirY;
+        this.dirX = 0;
+        this.dirY = 0;
     };
     return Player;
 }(CircleMovingEntity));
@@ -137,7 +138,6 @@ var KeyboardInput = /** @class */ (function () {
     }
     KeyboardInput.prototype.addKeycodeCallback = function (keycode, action) {
         this.keyCallback[keycode] = action;
-        this.keyDown[keycode] = false; // need this?
     };
     return KeyboardInput;
 }());
@@ -204,7 +204,15 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
     GameState.prototype.updateAll = function () {
+        // Update player
         this.player.update();
+        // Update player bullets
+        if (this.player.bullets.length > 0) {
+            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
+                var bullet = _a[_i];
+                bullet.update();
+            }
+        }
     };
     GameState.prototype.renderAll = function () {
         // Render player

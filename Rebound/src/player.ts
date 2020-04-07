@@ -3,6 +3,8 @@
 
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
+    public lastDirX: number = 0;
+    public lastDirY: number = 0;
 
     constructor() {
         super(50, 50, 0, 0, "green", 2, 3, 10);        
@@ -37,11 +39,16 @@ class Player extends CircleMovingEntity {
     public fireShot = (): void => {
         this.bullets.push(new Bullet(
             this.posX, this.posY, 
-            this.dirX, this.dirY
+            this.lastDirX, this.lastDirY
         ));
     }
 
-    update(): void { 
+    update(): void {
         super.update();
+        this.lastDirX = this.dirX;
+        this.lastDirY = this.dirY;
+        this.dirX = 0;
+        this.dirY = 0;
     }
+
 }

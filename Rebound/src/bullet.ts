@@ -7,4 +7,5 @@ class Bullet extends CircleMovingEntity {
     constructor(px: number, py: number, dx: number, dy: number) {
         super(px, py, dx, dy, "red", 1, 5, 5);
     }
+
 }
