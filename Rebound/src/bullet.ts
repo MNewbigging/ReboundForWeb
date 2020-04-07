@@ -14,16 +14,16 @@ class Bullet extends CircleMovingEntity {
     update(): void {
         super.update();
 
-        if (this.canvasUtils.outOfBoundsLeftOrTop(this.posX, this.moveSpeed, this.radius)) {
+        if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.posY, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsRight(this.posX, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsRight(this.pos.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsBottom(this.posY, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsBottom(this.pos.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
         

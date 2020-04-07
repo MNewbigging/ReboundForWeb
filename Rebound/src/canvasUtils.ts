@@ -23,9 +23,13 @@ class CanvasUtils {
         return this.canvasContext;
     }
 
+    public getMousePos(): Point {
+        return this.mousePos;
+    }
+
     private constructor() {
         this.setupCanvas();
-        document.addEventListener('mousemove', this.getMousePos);
+        document.addEventListener('mousemove', this.getMouseCanvasPos);
     }
 
     private setupCanvas(): void {
@@ -53,7 +57,7 @@ class CanvasUtils {
         }
     }    
 
-    private getMousePos = (event: MouseEvent): void => {
+    private getMouseCanvasPos = (event: MouseEvent): void => {
         this.mousePos.x = event.clientX - this.mouseOffsetLeft;
         this.mousePos.y = event.clientY - this.mouseOffsetTop;
         //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 

@@ -21,6 +21,19 @@ var Point = /** @class */ (function () {
         this.x = xVal;
         this.y = yVal;
     }
+    Point.Subtract = function (left, right) {
+        return new Point(left.x - right.x, left.y - right.y);
+    };
+    Point.Length = function (point) {
+        return Math.sqrt((point.x * point.x) + (point.y * point.y));
+    };
+    Point.Normalize = function (point) {
+        var length = this.Length(point);
+        return new Point(point.x / length, point.y / length);
+    };
+    Point.Print = function (point) {
+        console.log("(" + point.x + ", " + point.y + ")");
+    };
     return Point;
 }());
 /// <reference path="utils.ts" />
@@ -30,13 +43,13 @@ var CanvasUtils = /** @class */ (function () {
         this.mouseOffsetLeft = 0;
         this.mouseOffsetTop = 0;
         this.mousePos = new Point();
-        this.getMousePos = function (event) {
+        this.getMouseCanvasPos = function (event) {
             _this.mousePos.x = event.clientX - _this.mouseOffsetLeft;
             _this.mousePos.y = event.clientY - _this.mouseOffsetTop;
             //console.log(`mouse posx: ${this.mousePosX} posy: ${this.mousePosY}`); 
         };
         this.setupCanvas();
-        document.addEventListener('mousemove', this.getMousePos);
+        document.addEventListener('mousemove', this.getMouseCanvasPos);
     }
     CanvasUtils.getInstance = function () {
         if (!this.instance) {
@@ -49,6 +62,9 @@ var CanvasUtils = /** @class */ (function () {
     };
     CanvasUtils.prototype.getCanvasContext = function () {
         return this.canvasContext;
+    };
+    CanvasUtils.prototype.getMousePos = function () {
+        return this.mousePos;
     };
     CanvasUtils.prototype.setupCanvas = function () {
         // Get reference to canvas element
@@ -155,16 +171,16 @@ var Bullet = /** @class */ (function (_super) {
     }
     Bullet.prototype.update = function () {
         _super.prototype.update.call(this);
-        if (this.canvasUtils.outOfBoundsLeftOrTop(this.posX, this.moveSpeed, this.radius)) {
+        if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.posY, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsLeftOrTop(this.pos.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsRight(this.posX, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsRight(this.pos.x, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
-        else if (this.canvasUtils.outOfBoundsBottom(this.posY, this.moveSpeed, this.radius)) {
+        else if (this.canvasUtils.outOfBoundsBottom(this.pos.y, this.moveSpeed, this.radius)) {
             this.alive = false;
         }
     };
@@ -200,7 +216,11 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            _this.bullets.push(new Bullet(_this.pos.x, _this.pos.y, _this.lastDir.x, _this.lastDir.y));
+            // normalize(mousePos - playerPos)
+            var playerToMouse = Point.Subtract(_this.canvasUtils.getMousePos(), _this.pos);
+            var normDir = Point.Normalize(playerToMouse);
+            Point.Print(normDir);
+            _this.bullets.push(new Bullet(_this.pos.x, _this.pos.y, normDir.x, normDir.y));
         };
         _this.canvasUtils = CanvasUtils.getInstance();
         _this.bullets = [];
