@@ -54,13 +54,57 @@ var CircleMovingEntity = /** @class */ (function () {
 var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
     function Bullet(px, py, dx, dy) {
-        var _this = _super.call(this, px, py, dx, dy, "red", 1, 5, 5) || this;
-        _this.lifetime = 100;
+        var _this = _super.call(this, px, py, dx, dy, "red", 1, 20, 5) || this;
         _this.active = false;
         return _this;
     }
+    Bullet.prototype.update = function () {
+        // Delete bullet if outside of canvas
+        _super.prototype.update.call(this);
+    };
     return Bullet;
 }(CircleMovingEntity));
+var CanvasUtils = /** @class */ (function () {
+    function CanvasUtils() {
+        this.setupCanvas();
+    }
+    CanvasUtils.getInstance = function () {
+        if (!this.instance) {
+            CanvasUtils.instance = new CanvasUtils();
+        }
+        return CanvasUtils.instance;
+    };
+    CanvasUtils.prototype.getCanvas = function () {
+        return this.canvas;
+    };
+    CanvasUtils.prototype.getCanvasContext = function () {
+        return this.canvasContext;
+    };
+    CanvasUtils.prototype.setupCanvas = function () {
+        // Get reference to canvas element
+        var cvs = document.getElementById("game-canvas");
+        if (cvs instanceof HTMLCanvasElement) {
+            this.canvas = cvs;
+        }
+        // Get ref to canvas context
+        var ctx = this.canvas.getContext("2d");
+        if (ctx instanceof CanvasRenderingContext2D) {
+            this.canvasContext = ctx;
+        }
+        // Resize canvas based on current window dimensions
+        var canvasWrapper = document.getElementById("game-container");
+        if (this.canvas && canvasWrapper) {
+            var wrapperBounds = canvasWrapper.getBoundingClientRect();
+            this.canvas.width = wrapperBounds.width;
+            this.canvas.height = wrapperBounds.height;
+            console.log("canvas w: " + this.canvas.width);
+        }
+    };
+    CanvasUtils.prototype.clearCanvas = function () {
+        this.canvasContext.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    };
+    return CanvasUtils;
+}());
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 var Player = /** @class */ (function (_super) {
@@ -148,13 +192,14 @@ var KeyboardInput = /** @class */ (function () {
 }());
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
+/// <reference path= "canvasUtils.ts" />
 var GameState = /** @class */ (function () {
     function GameState() {
         var _this = this;
         // Main game logic loop
         this.gameLoop = function () {
             // Clear the canvas
-            _this.canvasContext.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
+            _this.canvasUtils.clearCanvas();
             // Player input 
             _this.keyInput.inputLoop();
             // Update
@@ -164,47 +209,25 @@ var GameState = /** @class */ (function () {
             // Repeat this function to loop
             requestAnimationFrame(_this.gameLoop);
         };
-        // Get reference to canvas element
-        var cvs = document.getElementById("game-canvas");
-        if (cvs instanceof HTMLCanvasElement) {
-            this.canvas = cvs;
-        }
-        // Get ref to canvas context
-        var ctx = this.canvas.getContext("2d");
-        if (ctx instanceof CanvasRenderingContext2D) {
-            this.canvasContext = ctx;
-        }
-        // Resize canvas based on current window dimensions
-        this.resizeCanvas();
-        // Init player
-        this.player = new Player();
-        // Init keyboard input manager class
+        this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
+        this.player = new Player();
         this.defineInputActions();
     }
-    GameState.prototype.resizeCanvas = function () {
-        var canvasWrapper = document.getElementById("game-container");
-        if (this.canvas && canvasWrapper) {
-            var wrapperBounds = canvasWrapper.getBoundingClientRect();
-            this.canvas.width = wrapperBounds.width;
-            this.canvas.height = wrapperBounds.height;
-            console.log("canvas w: " + this.canvas.width);
-        }
-    };
     GameState.prototype.defineInputActions = function () {
         // Add movement functions as callbacks
         // Left arrow / a
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
         this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvas.width));
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvas.width));
+        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
+        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
         // Up arrow / w
         this.keyInput.addKeycodeCallback(38, this.player.moveUp);
         this.keyInput.addKeycodeCallback(87, this.player.moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
+        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
+        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
@@ -221,12 +244,12 @@ var GameState = /** @class */ (function () {
     };
     GameState.prototype.renderAll = function () {
         // Render player
-        this.player.draw(this.canvasContext);
+        this.player.draw(this.canvasUtils.getCanvasContext());
         // Render player bullets
         if (this.player.bullets.length > 0) {
             for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
                 var bullet = _a[_i];
-                bullet.draw(this.canvasContext);
+                bullet.draw(this.canvasUtils.getCanvasContext());
             }
         }
     };

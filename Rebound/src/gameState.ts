@@ -1,41 +1,18 @@
 /// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
+/// <reference path= "canvasUtils.ts" />
 
 class GameState {
-    public player: Player;
+    public canvasUtils: CanvasUtils;
     public keyInput: KeyboardInput;
-    // Any isn't nice, can't have it un-initialised or potentially null as desired type though
-    public canvas: any;
-    public canvasContext: any;
+    public player: Player;
 
     constructor() {
-        // Get reference to canvas element
-        let cvs = <HTMLCanvasElement>document.getElementById("game-canvas");
-        if (cvs instanceof HTMLCanvasElement) {
-            this.canvas = cvs;
-        }
-        // Get ref to canvas context
-        let ctx = this.canvas.getContext("2d");
-        if (ctx instanceof CanvasRenderingContext2D) {
-            this.canvasContext = ctx;
-        }
-        // Resize canvas based on current window dimensions
-        this.resizeCanvas();
-        // Init player
-        this.player = new Player();
-        // Init keyboard input manager class
+        this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
+        this.player = new Player();
+        
         this.defineInputActions();
-    }
-
-    public resizeCanvas() {
-        let canvasWrapper = document.getElementById("game-container");
-        if (this.canvas && canvasWrapper) {
-            let wrapperBounds = canvasWrapper.getBoundingClientRect();
-            this.canvas.width = wrapperBounds.width;
-            this.canvas.height = wrapperBounds.height;
-            console.log(`canvas w: ${this.canvas.width}`);
-        }
     }
 
     private defineInputActions(): void {
@@ -44,14 +21,14 @@ class GameState {
         this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
         this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvas.width));
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvas.width));
+        this.keyInput.addKeycodeCallback(39, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
+        this.keyInput.addKeycodeCallback(68, this.player.moveRight.bind(this.player, this.canvasUtils.getCanvas().width));
         // Up arrow / w
         this.keyInput.addKeycodeCallback(38, this.player.moveUp);
         this.keyInput.addKeycodeCallback(87, this.player.moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvas.height));
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvas.height));
+        this.keyInput.addKeycodeCallback(40, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
+        this.keyInput.addKeycodeCallback(83, this.player.moveDown.bind(this.player, this.canvasUtils.getCanvas().height));
         // Fire
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     }
@@ -70,12 +47,12 @@ class GameState {
 
     public renderAll(): void {
         // Render player
-        this.player.draw(this.canvasContext);
+        this.player.draw(this.canvasUtils.getCanvasContext());
 
         // Render player bullets
         if (this.player.bullets.length > 0) {
             for(let bullet of this.player.bullets) {
-                bullet.draw(this.canvasContext);
+                bullet.draw(this.canvasUtils.getCanvasContext());
             }
         }
     }
@@ -83,8 +60,8 @@ class GameState {
     // Main game logic loop
     public gameLoop = (): void => {
         // Clear the canvas
-        this.canvasContext.clearRect(0,0, this.canvas.width, this.canvas.height);
-
+        this.canvasUtils.clearCanvas();
+        
         // Player input 
         this.keyInput.inputLoop();
 
