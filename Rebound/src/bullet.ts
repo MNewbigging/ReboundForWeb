@@ -64,7 +64,6 @@ class Bullet extends CircleMovingEntity {
             );
             let distance: Point = Point.Subtract(rectCenter, this.position);
             if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
-                this.color = "black";
                 for (let i: number = 0; i < bumper.vertices.length; i++) {
                     if(i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
@@ -77,9 +76,6 @@ class Bullet extends CircleMovingEntity {
                         break;
                     }
                 }
-            }
-            else {
-                this.color = "red";
             }
         }
     }

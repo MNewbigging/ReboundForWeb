@@ -1,19 +1,16 @@
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="utils.ts" />
-/// <reference path="collisionManager.ts" />
 /// <reference path="entityManager.ts" />
 
 class GameState {
     public canvasUtils: CanvasUtils;
     public keyInput: KeyboardInput;
-    public colMgr: CollisionManager;
     private entityMgr: EntityManager;
 
     constructor() {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
-        this.colMgr = new CollisionManager();
         this.entityMgr = EntityManager.getInstance();
 
         this.defineInputActions();

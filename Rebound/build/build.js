@@ -309,7 +309,6 @@ var Bullet = /** @class */ (function (_super) {
             var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
             var distance = Point.Subtract(rectCenter, this.position);
             if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
-                this.color = "black";
                 for (var i = 0; i < bumper.vertices.length; i++) {
                     if (i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
@@ -322,9 +321,6 @@ var Bullet = /** @class */ (function (_super) {
                         break;
                     }
                 }
-            }
-            else {
-                this.color = "red";
             }
         }
     };
@@ -627,7 +623,6 @@ var KeyboardInput = /** @class */ (function () {
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="utils.ts" />
-/// <reference path="collisionManager.ts" />
 /// <reference path="entityManager.ts" />
 var GameState = /** @class */ (function () {
     function GameState() {
@@ -647,7 +642,6 @@ var GameState = /** @class */ (function () {
         };
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
-        this.colMgr = new CollisionManager();
         this.entityMgr = EntityManager.getInstance();
         this.defineInputActions();
     }
