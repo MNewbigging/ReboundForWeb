@@ -42,7 +42,7 @@ class GameState {
     }
 
     private setupBumpers(): void {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
+        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange",-5, 70));
         this.circleBumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
         this.circleBumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
@@ -52,29 +52,13 @@ class GameState {
     }
 
     public updateAll(): void {
-        // Collision checks
+        // Collision checks - bullets
         if (this.player.bullets.length > 0) {
         this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
         }
-        /*
-        if (this.player.bullets.length > 0) {
-            for (let bullet of this.player.bullets) {
-                // Check for bumper collisions
-                for (let bumper of this.circleBumpers) {
-                    if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
-                        let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
-                        // Adjust bullet direction
-                        bullet.direction = Point.Reflect(bullet.direction, colNormal); 
-                        // Adjust bullet position by collision normal to prevent further collisions
-                        colNormal.x *= bullet.moveSpeed;
-                        colNormal.y *= bullet.moveSpeed;
-                        bullet.position.x = bullet.position.x - colNormal.x;
-                        bullet.position.y = bullet.position.y - colNormal.y;
-                    }
-                }
-            }
-        }
-        */
+        // Collision checks - player
+        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers);
+
         // Update player
         this.player.update();
     }

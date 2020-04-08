@@ -58,4 +58,11 @@ class Utils {
         
         return Point.LengthSq(distance) < radii * radii;
     }
+
+    public static ReboundOffset(p1: Point, p2: Point, step: number): Point {
+        let colNorm: Point = Utils.getTargetDirectionNormal(p1, p2);
+        colNorm.x *= step;
+        colNorm.y *= step;
+        return colNorm;
+    }
 }

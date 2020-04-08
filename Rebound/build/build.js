@@ -63,6 +63,12 @@ var Utils = /** @class */ (function () {
         var radii = c1r + c2r;
         return Point.LengthSq(distance) < radii * radii;
     };
+    Utils.ReboundOffset = function (p1, p2, step) {
+        var colNorm = Utils.getTargetDirectionNormal(p1, p2);
+        colNorm.x *= step;
+        colNorm.y *= step;
+        return colNorm;
+    };
     return Utils;
 }());
 /// <reference path="utils.ts" />
@@ -318,17 +324,26 @@ var CollisionManager = /** @class */ (function () {
             var bumper = circleBumpers_1[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
                 var colNormal = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
-                // Adjust bullet direction
+                // Adjust bullet direction before colNorm * speed
                 bullet.direction = Point.Reflect(bullet.direction, colNormal);
                 // Adjust bullet position by collision normal to prevent further collisions
                 colNormal.x *= bullet.moveSpeed;
                 colNormal.y *= bullet.moveSpeed;
-                bullet.position.x = bullet.position.x - colNormal.x;
-                bullet.position.y = bullet.position.y - colNormal.y;
+                bullet.position.x -= colNormal.x;
+                bullet.position.y -= colNormal.y;
             }
         }
     };
-    CollisionManager.prototype.checkPlayerCollisions = function (player) {
+    CollisionManager.prototype.checkPlayerCollisions = function (player, circleBumpers) {
+        for (var _i = 0, circleBumpers_2 = circleBumpers; _i < circleBumpers_2.length; _i++) {
+            var bumper = circleBumpers_2[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, player.position, player.radius)) {
+                // Adjust player position to avoid further collisions
+                var offset = Utils.ReboundOffset(bumper.position, player.position, player.moveSpeed);
+                player.position.x -= offset.x;
+                player.position.y -= offset.y;
+            }
+        }
     };
     return CollisionManager;
 }());
@@ -416,7 +431,7 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
     GameState.prototype.setupBumpers = function () {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
+        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange", -5, 70));
         this.circleBumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
         this.circleBumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
@@ -425,29 +440,12 @@ var GameState = /** @class */ (function () {
         this.circleBumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
     };
     GameState.prototype.updateAll = function () {
-        // Collision checks
+        // Collision checks - bullets
         if (this.player.bullets.length > 0) {
             this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
         }
-        /*
-        if (this.player.bullets.length > 0) {
-            for (let bullet of this.player.bullets) {
-                // Check for bumper collisions
-                for (let bumper of this.circleBumpers) {
-                    if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
-                        let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
-                        // Adjust bullet direction
-                        bullet.direction = Point.Reflect(bullet.direction, colNormal);
-                        // Adjust bullet position by collision normal to prevent further collisions
-                        colNormal.x *= bullet.moveSpeed;
-                        colNormal.y *= bullet.moveSpeed;
-                        bullet.position.x = bullet.position.x - colNormal.x;
-                        bullet.position.y = bullet.position.y - colNormal.y;
-                    }
-                }
-            }
-        }
-        */
+        // Collision checks - player
+        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers);
         // Update player
         this.player.update();
     };
