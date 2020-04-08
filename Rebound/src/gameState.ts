@@ -35,39 +35,11 @@ class GameState {
     }
 
     public updateAll(): void {
-        // Update player (which updates bullets)
-        this.entityMgr.getPlayer().update();
-        
-        // Update enemies
-        for (let enemy of this.entityMgr.getEnemies()) {
-            enemy.update();
-        }
+        EntityManager.getInstance().updateEntities();
     }
 
     public renderAll(): void {
-        // Render player
-        this.entityMgr.getPlayer().draw();
-
-        // Render player bullets
-        if (this.entityMgr.getPlayer().bullets.length > 0) {
-            for(let bullet of this.entityMgr.getPlayer().bullets) {
-                bullet.draw();
-            }
-        }
-
-        // Render bumpers
-        for(let bumper of this.entityMgr.getCircleBumpers()) {
-            bumper.draw();
-        }
-
-        for (let bumper of this.entityMgr.getRectBumpers()) {
-            bumper.draw();
-        }
-
-        // Render enemies
-        for(let enemy of this.entityMgr.getEnemies()) {
-            enemy.draw();
-        }
+        EntityManager.getInstance().renderEntities();
     }
 
     // Main game logic loop

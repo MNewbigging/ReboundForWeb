@@ -52,4 +52,45 @@ class EntityManager {
         this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
     }
 
+    public updateEntities(): void {
+        this.player.update();
+
+        for (let enemy of this.enemies) {
+            enemy.update();
+        }
+
+        this.removeDeadEnemies();
+    }
+
+    private removeDeadEnemies(): void {
+        for (let i: number = 0; i < this.enemies.length; i++) {
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
+        }
+    }
+
+    public renderEntities(): void {
+        // Player
+        this.player.draw();
+        // Player bullets
+        if (this.player.bullets.length > 0) {
+            for (let bullet of this.player.bullets) {
+                bullet.draw();
+            }
+        }
+        // Bumpers
+        for (let bumper of this.circleBumpers) {
+            bumper.draw();
+        }
+        for (let bumper of this.rectBumpers) {
+            bumper.draw();
+        }
+        // Enemies
+        if (this.enemies.length > 0) {
+            for (let enemy of this.enemies) {
+                enemy.draw();
+            }
+        }
+    }
 }

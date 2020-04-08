@@ -2,8 +2,11 @@
 /// <reference path="utils.ts" />
 
 class Enemy extends CircleMovingEntity {
-    // Denies changing direction in update (allow for simple impulses)
+    public alive: boolean = true;
+    private health: number = 100;
+    // Denies changing direction in update (allows for simple impulses)
     private directionCooldown: number = 0;
+
     update(): void {
         // Only continue if haven't hit player
         if (!this.enemyHasCollidedWithPlayer()) {
@@ -86,5 +89,12 @@ class Enemy extends CircleMovingEntity {
         // Move back to avoid futher collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+    }
+
+    public takeDamage(damage: number): void {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.alive = false;
+        }
     }
 }

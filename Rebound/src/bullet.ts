@@ -1,22 +1,21 @@
 /// <reference path="entities.ts" />
 
 class Bullet extends CircleMovingEntity {
-    public alive: boolean = true; // does this bullet exist
-
-    /*
-    +1 to this every rebound; damage can be multiplied rather than if(active) each frame!
+    public alive: boolean = true; // TODO rename to outOfBounds or similar
     public damageMultiplier: number = 0;
-    */
+    public damage: number = 100;
+    private reboundRadiusGrowthStep: number = 2;
+    
 
     constructor(p: Point, dir: Point) {
-        super(p, "red", 1, 5, dir, 12);
+        super(p, "grey", 1, 5, dir, 12);
     }    
 
     update(): void {
         super.update();
 
         this.checkIfOutOfBounds();
-        this.checkCollisionsWithBumpers();
+        this.checkCollisions();
     }
     
     private checkIfOutOfBounds(): void {
@@ -34,9 +33,10 @@ class Bullet extends CircleMovingEntity {
         }
     }
 
-    private checkCollisionsWithBumpers(): void {
+    private checkCollisions(): void {
         this.checkCollisionsWithCircleBumpers();
         this.checkCollisionsWithRectBumpers();
+        this.checkCollisionWithEnemies();
     }
 
     private checkCollisionsWithCircleBumpers(): void {
@@ -50,6 +50,8 @@ class Bullet extends CircleMovingEntity {
                 colNormal.y *= this.moveSpeed;
                 this.position.x -= colNormal.x;
                 this.position.y -= colNormal.y;
+                // Apply any other effects on rebound
+                this.applyReboundEffects();
                 break;
             }
         }
@@ -92,6 +94,28 @@ class Bullet extends CircleMovingEntity {
         // Move back to avoid futher collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+
+        // Apply other rebound effects
+        this.applyReboundEffects();
+    }
+
+    private applyReboundEffects(): void {
+        this.damageMultiplier += 1;
+        this.radius += this.reboundRadiusGrowthStep;
+        this.color = "red";
+    }
+
+    private checkCollisionWithEnemies(): void {
+        // Only run checks for enemies if we have a damage greater than 0!
+        if (this.damageMultiplier > 0) {
+            for (let enemy of EntityManager.getInstance().getEnemies()) {
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
+                    // Damage the enemy
+                    enemy.takeDamage(this.damage * this.damageMultiplier);
+                    break;
+                }
+            }
+        }
     }
 
 

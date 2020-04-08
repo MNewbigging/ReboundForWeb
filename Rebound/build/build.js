@@ -277,19 +277,18 @@ var CircleMovingEntity = /** @class */ (function (_super) {
 /// <reference path="entities.ts" />
 var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
-    /*
-    +1 to this every rebound; damage can be multiplied rather than if(active) each frame!
-    public damageMultiplier: number = 0;
-    */
     function Bullet(p, dir) {
-        var _this = _super.call(this, p, "red", 1, 5, dir, 12) || this;
-        _this.alive = true; // does this bullet exist
+        var _this = _super.call(this, p, "grey", 1, 5, dir, 12) || this;
+        _this.alive = true; // TODO rename to outOfBounds or similar
+        _this.damageMultiplier = 0;
+        _this.damage = 100;
+        _this.reboundRadiusGrowthStep = 2;
         return _this;
     }
     Bullet.prototype.update = function () {
         _super.prototype.update.call(this);
         this.checkIfOutOfBounds();
-        this.checkCollisionsWithBumpers();
+        this.checkCollisions();
     };
     Bullet.prototype.checkIfOutOfBounds = function () {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
@@ -305,9 +304,10 @@ var Bullet = /** @class */ (function (_super) {
             this.alive = false;
         }
     };
-    Bullet.prototype.checkCollisionsWithBumpers = function () {
+    Bullet.prototype.checkCollisions = function () {
         this.checkCollisionsWithCircleBumpers();
         this.checkCollisionsWithRectBumpers();
+        this.checkCollisionWithEnemies();
     };
     Bullet.prototype.checkCollisionsWithCircleBumpers = function () {
         for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
@@ -321,6 +321,8 @@ var Bullet = /** @class */ (function (_super) {
                 colNormal.y *= this.moveSpeed;
                 this.position.x -= colNormal.x;
                 this.position.y -= colNormal.y;
+                // Apply any other effects on rebound
+                this.applyReboundEffects();
                 break;
             }
         }
@@ -359,6 +361,26 @@ var Bullet = /** @class */ (function (_super) {
         // Move back to avoid futher collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+        // Apply other rebound effects
+        this.applyReboundEffects();
+    };
+    Bullet.prototype.applyReboundEffects = function () {
+        this.damageMultiplier += 1;
+        this.radius += this.reboundRadiusGrowthStep;
+        this.color = "red";
+    };
+    Bullet.prototype.checkCollisionWithEnemies = function () {
+        // Only run checks for enemies if we have a damage greater than 0!
+        if (this.damageMultiplier > 0) {
+            for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
+                var enemy = _a[_i];
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
+                    // Damage the enemy
+                    enemy.takeDamage(this.damage * this.damageMultiplier);
+                    break;
+                }
+            }
+        }
     };
     return Bullet;
 }(CircleMovingEntity));
@@ -393,7 +415,9 @@ var Enemy = /** @class */ (function (_super) {
     __extends(Enemy, _super);
     function Enemy() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        // Denies changing direction in update (allow for simple impulses)
+        _this.alive = true;
+        _this.health = 100;
+        // Denies changing direction in update (allows for simple impulses)
         _this.directionCooldown = 0;
         return _this;
     }
@@ -470,6 +494,12 @@ var Enemy = /** @class */ (function (_super) {
         // Move back to avoid futher collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+    };
+    Enemy.prototype.takeDamage = function (damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.alive = false;
+        }
     };
     return Enemy;
 }(CircleMovingEntity));
@@ -610,6 +640,48 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.setupEnemies = function () {
         this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
     };
+    EntityManager.prototype.updateEntities = function () {
+        this.player.update();
+        for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            enemy.update();
+        }
+        this.removeDeadEnemies();
+    };
+    EntityManager.prototype.removeDeadEnemies = function () {
+        for (var i = 0; i < this.enemies.length; i++) {
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
+        }
+    };
+    EntityManager.prototype.renderEntities = function () {
+        // Player
+        this.player.draw();
+        // Player bullets
+        if (this.player.bullets.length > 0) {
+            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
+                var bullet = _a[_i];
+                bullet.draw();
+            }
+        }
+        // Bumpers
+        for (var _b = 0, _c = this.circleBumpers; _b < _c.length; _b++) {
+            var bumper = _c[_b];
+            bumper.draw();
+        }
+        for (var _d = 0, _e = this.rectBumpers; _d < _e.length; _d++) {
+            var bumper = _e[_d];
+            bumper.draw();
+        }
+        // Enemies
+        if (this.enemies.length > 0) {
+            for (var _f = 0, _g = this.enemies; _f < _g.length; _f++) {
+                var enemy = _g[_f];
+                enemy.draw();
+            }
+        }
+    };
     return EntityManager;
 }());
 var KeyboardInput = /** @class */ (function () {
@@ -691,38 +763,10 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     };
     GameState.prototype.updateAll = function () {
-        // Update player (which updates bullets)
-        this.entityMgr.getPlayer().update();
-        // Update enemies
-        for (var _i = 0, _a = this.entityMgr.getEnemies(); _i < _a.length; _i++) {
-            var enemy = _a[_i];
-            enemy.update();
-        }
+        EntityManager.getInstance().updateEntities();
     };
     GameState.prototype.renderAll = function () {
-        // Render player
-        this.entityMgr.getPlayer().draw();
-        // Render player bullets
-        if (this.entityMgr.getPlayer().bullets.length > 0) {
-            for (var _i = 0, _a = this.entityMgr.getPlayer().bullets; _i < _a.length; _i++) {
-                var bullet = _a[_i];
-                bullet.draw();
-            }
-        }
-        // Render bumpers
-        for (var _b = 0, _c = this.entityMgr.getCircleBumpers(); _b < _c.length; _b++) {
-            var bumper = _c[_b];
-            bumper.draw();
-        }
-        for (var _d = 0, _e = this.entityMgr.getRectBumpers(); _d < _e.length; _d++) {
-            var bumper = _e[_d];
-            bumper.draw();
-        }
-        // Render enemies
-        for (var _f = 0, _g = this.entityMgr.getEnemies(); _f < _g.length; _f++) {
-            var enemy = _g[_f];
-            enemy.draw();
-        }
+        EntityManager.getInstance().renderEntities();
     };
     return GameState;
 }());
