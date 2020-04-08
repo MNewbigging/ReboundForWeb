@@ -69,7 +69,9 @@ var Utils = /** @class */ (function () {
         colNorm.y *= step;
         return colNorm;
     };
-    Utils.CircleToLineIntersect = function (p1, p2) {
+    // p1, p2 are for line end points
+    // center is center point of circle 
+    Utils.CircleToLineIntersect = function (p1, p2, center, radius) {
         return false;
     };
     return Utils;
@@ -229,13 +231,14 @@ var Bullet = /** @class */ (function (_super) {
     public damageMultiplier: number = 0;
     */
     function Bullet(p, dir) {
-        var _this = _super.call(this, p, "red", 1, 5, dir, 10) || this;
+        var _this = _super.call(this, p, "red", 1, 5, dir, 3) || this;
         _this.alive = true; // does this bullet exist
         return _this;
     }
     Bullet.prototype.update = function () {
         _super.prototype.update.call(this);
         this.checkIfOutOfBounds();
+        this.checkCollisionsWithBumpers();
     };
     Bullet.prototype.checkIfOutOfBounds = function () {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
@@ -249,6 +252,40 @@ var Bullet = /** @class */ (function (_super) {
         }
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
             this.alive = false;
+        }
+    };
+    Bullet.prototype.checkCollisionsWithBumpers = function () {
+        this.checkCollisionsWithCircleBumpers();
+        this.checkCollisionsWithRectBumpers();
+    };
+    Bullet.prototype.checkCollisionsWithCircleBumpers = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
+                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
+                // Adjust bullet direction before colNorm * speed
+                this.direction = Point.Reflect(this.direction, colNormal);
+                // Adjust bullet position by collision normal to prevent further collisions
+                colNormal.x *= this.moveSpeed;
+                colNormal.y *= this.moveSpeed;
+                this.position.x -= colNormal.x;
+                this.position.y -= colNormal.y;
+            }
+        }
+    };
+    Bullet.prototype.checkCollisionsWithRectBumpers = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            // Basic distance check before continuing with collision detection
+            // Center point of rect bumper
+            var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
+            var distance = Point.Subtract(rectCenter, this.position);
+            if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+                this.color = "black";
+            }
+            else {
+                this.color = "red";
+            }
         }
     };
     return Bullet;
@@ -570,12 +607,6 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     };
     GameState.prototype.updateAll = function () {
-        // Collision checks - bullets
-        if (this.entityMgr.getPlayer().bullets.length > 0) {
-            this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.entityMgr.getCircleBumpers());
-        }
-        // Collision checks - player
-        //this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.entityMgr.getCircleBumpers(), this.entityMgr.getRectBumpers());
         // Update player
         this.entityMgr.getPlayer().update();
     };

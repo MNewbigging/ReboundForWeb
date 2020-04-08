@@ -37,21 +37,10 @@ class GameState {
         this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     }
 
-
-
     public updateAll(): void {
-        // Collision checks - bullets
-        if (this.entityMgr.getPlayer().bullets.length > 0) {
-        this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.entityMgr.getCircleBumpers());
-        }
-        // Collision checks - player
-       //this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.entityMgr.getCircleBumpers(), this.entityMgr.getRectBumpers());
-
         // Update player
         this.entityMgr.getPlayer().update();
     }
-
-
 
     public renderAll(): void {
         // Render player

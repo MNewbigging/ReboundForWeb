@@ -65,8 +65,10 @@ class Utils {
         colNorm.y *= step;
         return colNorm;
     }
-
-    public static CircleToLineIntersect(p1: Point, p2: Point): boolean {
+    // p1, p2 are for line end points
+    // center is center point of circle 
+    public static CircleToLineIntersect(p1: Point, p2: Point, center: Point, radius: number): boolean {
         return false;
     }
+
 }
