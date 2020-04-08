@@ -103,24 +103,7 @@ class Player extends CircleMovingEntity {
         }
 
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
-            // Distance check before performing collision detection
-            let distance: Point = Point.Subtract(bumper.position, nextPos);
-            let xIntersect: boolean = false;
-            let yIntersect: boolean = false;
-            // Do checks based on relative position; is distance x or y negative? 
-            if (distance.x > 0 && distance.x < this.radius) {
-                xIntersect = true;
-            }
-            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
-                xIntersect = true;
-            }
-            if(distance.y > 0 && distance.y < this.radius) {
-                yIntersect = true;
-            }
-            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
-                yIntersect = true;
-            }
-            if (xIntersect && yIntersect) {
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
                 playerWillCollide = true;
                 break;
             }

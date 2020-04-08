@@ -102,6 +102,29 @@ var Utils = /** @class */ (function () {
         }
         return false;
     };
+    Utils.isCircleInsideRectArea = function (rectPos, rectWidth, rectHeight, circlePos, circleRadius) {
+        var circleInside = false;
+        var xIntersect = false;
+        var yIntersect = false;
+        // Get distance vector between rect pos (top left origin) and circle pos
+        var distance = Point.Subtract(rectPos, circlePos);
+        if (distance.x > 0 && distance.x < circleRadius) {
+            xIntersect = true;
+        }
+        else if (distance.x <= 0 && Math.abs(distance.x) < rectWidth + circleRadius) {
+            xIntersect = true;
+        }
+        if (distance.y > 0 && distance.y < circleRadius) {
+            yIntersect = true;
+        }
+        else if (distance.y <= 0 && Math.abs(distance.y) < rectHeight + circleRadius) {
+            yIntersect = true;
+        }
+        if (xIntersect && yIntersect) {
+            circleInside = true;
+        }
+        return circleInside;
+    };
     return Utils;
 }());
 /// <reference path="utils.ts" />
@@ -412,18 +435,41 @@ var Enemy = /** @class */ (function (_super) {
                 var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
                 this.direction = Point.Reflect(this.direction, colNormal);
                 this.directionCooldown = 20;
+                break;
             }
         }
     };
     Enemy.prototype.checkCollisionsWithRectBumpers = function () {
         for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
-            var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
-            var distance = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
-                // if distance.x is positive, this is to the left of center
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
+                for (var i = 0; i < bumper.vertices.length; i++) {
+                    if (i === 3) {
+                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
+                            this.adjustDirectionFromRectCollision(i);
+                            break;
+                        }
+                    }
+                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
+                        this.adjustDirectionFromRectCollision(i);
+                        break;
+                    }
+                }
+                this.directionCooldown = 20;
+                break;
             }
         }
+    };
+    Enemy.prototype.adjustDirectionFromRectCollision = function (side) {
+        if (side === 0 || side === 2) {
+            this.direction.y = -this.direction.y;
+        }
+        else if (side === 1 || side === 3) {
+            this.direction.x = -this.direction.x;
+        }
+        // Move back to avoid futher collisions
+        this.position.x += this.direction.x * this.moveSpeed;
+        this.position.y += this.direction.y * this.moveSpeed;
     };
     return Enemy;
 }(CircleMovingEntity));
@@ -517,24 +563,7 @@ var Player = /** @class */ (function (_super) {
         }
         for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
             var bumper = _c[_b];
-            // Distance check before performing collision detection
-            var distance = Point.Subtract(bumper.position, nextPos);
-            var xIntersect = false;
-            var yIntersect = false;
-            // Do checks based on relative position; is distance x or y negative? 
-            if (distance.x > 0 && distance.x < this.radius) {
-                xIntersect = true;
-            }
-            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
-                xIntersect = true;
-            }
-            if (distance.y > 0 && distance.y < this.radius) {
-                yIntersect = true;
-            }
-            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
-                yIntersect = true;
-            }
-            if (xIntersect && yIntersect) {
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
                 playerWillCollide = true;
                 break;
             }
@@ -576,8 +605,7 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.setupBumpers = function () {
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.rectBumpers.push(new RectangleBumper(new Point(500, 200), "blue", 2, 200, 100, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 600, 100, "black"));
     };
     EntityManager.prototype.setupEnemies = function () {
         this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));

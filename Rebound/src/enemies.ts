@@ -49,20 +49,42 @@ class Enemy extends CircleMovingEntity {
                 let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, this.position);
                 this.direction = Point.Reflect(this.direction, colNormal);
                 this.directionCooldown = 20;
+                break;
             }
         } 
     }
 
     private checkCollisionsWithRectBumpers(): void {
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
-            let rectCenter: Point  = new Point(
-                bumper.position.x + bumper.width / 2,
-                bumper.position.y + bumper.height / 2
-            );
-            let distance: Point = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
-                // if distance.x is positive, this is to the left of center
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
+                for (let i: number = 0; i < bumper.vertices.length; i++) {
+                    if(i === 3) {
+                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
+                            this.adjustDirectionFromRectCollision(i);
+                            break;
+                        }
+                    }
+                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i+1], this.position, this.radius)) {
+                        this.adjustDirectionFromRectCollision(i);
+                        break;
+                    }
+                }
+                this.directionCooldown = 20;
+                break;
             }
+            
         }
+    }
+
+    private adjustDirectionFromRectCollision(side: number): void {
+        if (side === 0 || side === 2) {
+            this.direction.y = -this.direction.y;
+        }
+        else if (side === 1 || side === 3) {
+            this.direction.x = -this.direction.x;
+        }
+        // Move back to avoid futher collisions
+        this.position.x += this.direction.x * this.moveSpeed;
+        this.position.y += this.direction.y * this.moveSpeed;
     }
 }

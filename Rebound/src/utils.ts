@@ -106,4 +106,29 @@ class Utils {
         return false;
     }
 
+    public static isCircleInsideRectArea(rectPos: Point, rectWidth: number, rectHeight: number, circlePos: Point, circleRadius: number): boolean {
+        let circleInside: boolean = false;
+        let xIntersect: boolean = false;
+        let yIntersect: boolean = false;
+        // Get distance vector between rect pos (top left origin) and circle pos
+        let distance: Point = Point.Subtract(rectPos, circlePos);
+        
+        if (distance.x > 0 && distance.x < circleRadius) {
+            xIntersect = true;
+        }
+        else if (distance.x <= 0 && Math.abs(distance.x) < rectWidth + circleRadius) {
+            xIntersect = true;
+        }
+        if(distance.y > 0 && distance.y < circleRadius) {
+            yIntersect = true;
+        }
+        else if (distance.y <= 0 && Math.abs(distance.y) < rectHeight + circleRadius) {
+            yIntersect = true;
+        }
+        if (xIntersect && yIntersect) {
+            circleInside = true;
+        }
+
+        return circleInside;
+    }
 }
