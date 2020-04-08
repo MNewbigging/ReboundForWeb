@@ -238,6 +238,9 @@ var Player = /** @class */ (function (_super) {
     function Player() {
         var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 3) || this;
         _this.lastDir = new Point(0, -1);
+        _this.maxBullets = 30;
+        _this.timeBetweenShots = 0;
+        _this.maxTimeBetweenShots = 30;
         _this.moveLeft = function () {
             if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.position.x, _this.moveSpeed, _this.radius)) {
                 _this.direction.x = -1;
@@ -259,13 +262,23 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), Utils.getTargetDirectionNormal(_this.canvasUtils.getMousePos(), _this.position)));
+            // Ensure player hasn't reached max bullet count yet
+            if (_this.bullets.length < _this.maxBullets) {
+                // and make sure time between shots has run out
+                if (_this.timeBetweenShots <= 0) {
+                    _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), Utils.getTargetDirectionNormal(_this.canvasUtils.getMousePos(), _this.position)));
+                    // Reset bullet timer
+                    _this.timeBetweenShots = _this.maxTimeBetweenShots;
+                }
+            }
         };
         _this.bullets = [];
         return _this;
     }
     Player.prototype.update = function () {
         _super.prototype.update.call(this);
+        // Tick down time between shots
+        this.timeBetweenShots -= 1;
         // If there is a direction to save
         if (this.direction.x != 0 || this.direction.y != 0) {
             // Save current direction for bullets next frame
@@ -389,7 +402,6 @@ var GameState = /** @class */ (function () {
                         var colNormal = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
                         // Adjust bullet direction
                         bullet.direction = Point.Reflect(bullet.direction, colNormal);
-                        Point.Print(bullet.direction);
                         // Adjust bullet position by collision normal to prevent further collisions
                         colNormal.x *= bullet.moveSpeed;
                         colNormal.y *= bullet.moveSpeed;

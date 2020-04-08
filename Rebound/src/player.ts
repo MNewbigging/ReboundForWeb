@@ -6,6 +6,9 @@
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
     public lastDir: Point = new Point(0, -1);
+    private maxBullets: number = 30;
+    private timeBetweenShots: number = 0;
+    private maxTimeBetweenShots: number = 30;
 
     constructor() {
         super(new Point(20, 20), "green", 2, 10, new Point(), 3);     
@@ -37,15 +40,25 @@ class Player extends CircleMovingEntity {
     }
 
     public fireShot = (): void => {
-        this.bullets.push(new Bullet(
-            new Point(this.position.x, this.position.y), 
-            Utils.getTargetDirectionNormal(this.canvasUtils.getMousePos(), this.position)
-        ));
+        // Ensure player hasn't reached max bullet count yet
+        if (this.bullets.length < this.maxBullets) {
+            // and make sure time between shots has run out
+            if (this.timeBetweenShots <= 0) {
+                this.bullets.push(new Bullet(
+                    new Point(this.position.x, this.position.y), 
+                    Utils.getTargetDirectionNormal(this.canvasUtils.getMousePos(), this.position)
+                ));
+                // Reset bullet timer
+                this.timeBetweenShots = this.maxTimeBetweenShots;
+            }
+        }
     }
 
     update(): void {
         super.update();
-        
+        // Tick down time between shots
+        this.timeBetweenShots -= 1;
+
         // If there is a direction to save
         if (this.direction.x != 0 || this.direction.y != 0) {
             // Save current direction for bullets next frame

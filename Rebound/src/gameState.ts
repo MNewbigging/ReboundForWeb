@@ -57,8 +57,7 @@ class GameState {
                     if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
                         let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
                         // Adjust bullet direction
-                        bullet.direction = Point.Reflect(bullet.direction, colNormal);
-                        Point.Print(bullet.direction); 
+                        bullet.direction = Point.Reflect(bullet.direction, colNormal); 
                         // Adjust bullet position by collision normal to prevent further collisions
                         colNormal.x *= bullet.moveSpeed;
                         colNormal.y *= bullet.moveSpeed;
