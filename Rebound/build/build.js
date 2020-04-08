@@ -268,10 +268,42 @@ var RectangleBumper = /** @class */ (function (_super) {
     }
     return RectangleBumper;
 }(RectangleEntity));
+/// <reference path="player.ts" />
+/// <reference path="bumpers.ts" />
+var EntityManager = /** @class */ (function () {
+    function EntityManager() {
+        this.player = new Player();
+        this.circleBumpers = [];
+        this.rectBumpers = [];
+        this.setupBumpers();
+    }
+    EntityManager.getInstance = function () {
+        if (!this.instance) {
+            EntityManager.instance = new EntityManager();
+        }
+        return EntityManager.instance;
+    };
+    EntityManager.prototype.getPlayer = function () {
+        return this.player;
+    };
+    EntityManager.prototype.getCircleBumpers = function () {
+        return this.circleBumpers;
+    };
+    EntityManager.prototype.getRectBumpers = function () {
+        return this.rectBumpers;
+    };
+    EntityManager.prototype.setupBumpers = function () {
+        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
+        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
+    };
+    return EntityManager;
+}());
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="entityManager.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
@@ -314,8 +346,50 @@ var Player = /** @class */ (function (_super) {
         _this.bullets = [];
         return _this;
     }
+    Player.prototype.playerWillCollideWithBumper = function () {
+        var playerWillCollide = false;
+        // Simulate where player will be next frame
+        var nextPos = new Point(this.position.x, this.position.y);
+        var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        nextPos.x += (this.direction.x * speed);
+        nextPos.y += (this.direction.y * speed);
+        // Use the next frame pos to check for collisions
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
+                playerWillCollide = true;
+            }
+        }
+        for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
+            var bumper = _c[_b];
+            // Distance check before performing collision detection
+            var distance = Point.Subtract(bumper.position, nextPos);
+            var xIntersect = false;
+            var yIntersect = false;
+            // Do checks based on relative position; is distance x or y negative? 
+            if (distance.x > 0 && distance.x < this.radius) {
+                xIntersect = true;
+            }
+            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
+                xIntersect = true;
+            }
+            if (distance.y > 0 && distance.y < this.radius) {
+                yIntersect = true;
+            }
+            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
+                yIntersect = true;
+            }
+            if (xIntersect && yIntersect) {
+                playerWillCollide = true;
+            }
+        }
+        return playerWillCollide;
+    };
     Player.prototype.update = function () {
-        _super.prototype.update.call(this);
+        // Only move the player if it won't collide with an obstacle
+        if (!this.playerWillCollideWithBumper()) {
+            _super.prototype.update.call(this);
+        }
         // Tick down time between shots
         this.timeBetweenShots -= 1;
         // If there is a direction to save
@@ -415,23 +489,6 @@ var CollisionManager = /** @class */ (function () {
     };
     return CollisionManager;
 }());
-/// <reference path="player.ts" />
-/// <reference path="bumpers.ts" />
-var EntityManager = /** @class */ (function () {
-    function EntityManager() {
-        this.player = new Player();
-    }
-    EntityManager.getInstance = function () {
-        if (!this.instance) {
-            EntityManager.instance = new EntityManager();
-        }
-        return EntityManager.instance;
-    };
-    EntityManager.prototype.getPlayer = function () {
-        return this.player;
-    };
-    return EntityManager;
-}());
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
         var _this = this;
@@ -468,10 +525,8 @@ var KeyboardInput = /** @class */ (function () {
     };
     return KeyboardInput;
 }());
-/// <reference path="player.ts" />
 /// <reference path="keyboardInput.ts" />
 /// <reference path= "canvasUtils.ts" />
-/// <reference path="bumpers.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="collisionManager.ts" />
 /// <reference path="entityManager.ts" />
@@ -495,9 +550,6 @@ var GameState = /** @class */ (function () {
         this.keyInput = new KeyboardInput();
         this.colMgr = new CollisionManager();
         this.entityMgr = EntityManager.getInstance();
-        this.circleBumpers = [];
-        this.rectBumpers = [];
-        this.setupBumpers();
         this.defineInputActions();
     }
     GameState.prototype.defineInputActions = function () {
@@ -517,18 +569,13 @@ var GameState = /** @class */ (function () {
         // Fire
         this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     };
-    GameState.prototype.setupBumpers = function () {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
-        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
-    };
     GameState.prototype.updateAll = function () {
         // Collision checks - bullets
         if (this.entityMgr.getPlayer().bullets.length > 0) {
-            this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.circleBumpers);
+            this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.entityMgr.getCircleBumpers());
         }
         // Collision checks - player
-        this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.circleBumpers, this.rectBumpers);
+        //this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.entityMgr.getCircleBumpers(), this.entityMgr.getRectBumpers());
         // Update player
         this.entityMgr.getPlayer().update();
     };
@@ -543,11 +590,11 @@ var GameState = /** @class */ (function () {
             }
         }
         // Render bumpers
-        for (var _b = 0, _c = this.circleBumpers; _b < _c.length; _b++) {
+        for (var _b = 0, _c = this.entityMgr.getCircleBumpers(); _b < _c.length; _b++) {
             var bumper = _c[_b];
             bumper.draw();
         }
-        for (var _d = 0, _e = this.rectBumpers; _d < _e.length; _d++) {
+        for (var _d = 0, _e = this.entityMgr.getRectBumpers(); _d < _e.length; _d++) {
             var bumper = _e[_d];
             bumper.draw();
         }
