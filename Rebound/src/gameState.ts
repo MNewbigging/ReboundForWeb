@@ -35,8 +35,13 @@ class GameState {
     }
 
     public updateAll(): void {
-        // Update player
+        // Update player (which updates bullets)
         this.entityMgr.getPlayer().update();
+        
+        // Update enemies
+        for (let enemy of this.entityMgr.getEnemies()) {
+            enemy.update();
+        }
     }
 
     public renderAll(): void {
@@ -57,6 +62,11 @@ class GameState {
 
         for (let bumper of this.entityMgr.getRectBumpers()) {
             bumper.draw();
+        }
+
+        // Render enemies
+        for(let enemy of this.entityMgr.getEnemies()) {
+            enemy.draw();
         }
     }
 

@@ -362,38 +362,58 @@ var RectangleBumper = /** @class */ (function (_super) {
     };
     return RectangleBumper;
 }(RectangleEntity));
-/// <reference path="player.ts" />
-/// <reference path="bumpers.ts" />
-var EntityManager = /** @class */ (function () {
-    function EntityManager() {
-        this.player = new Player();
-        this.circleBumpers = [];
-        this.rectBumpers = [];
-        this.setupBumpers();
+/// <reference path="entities.ts" />
+/// <reference path="utils.ts" />
+var Enemy = /** @class */ (function (_super) {
+    __extends(Enemy, _super);
+    function Enemy() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        // Denies changing direction in update (allow for simple impulses)
+        _this.directionCooldown = 0;
+        return _this;
     }
-    EntityManager.getInstance = function () {
-        if (!this.instance) {
-            EntityManager.instance = new EntityManager();
+    Enemy.prototype.update = function () {
+        // Only continue if haven't hit player
+        if (!this.enemyHasCollidedWithPlayer()) {
+            // direction cooldown tick
+            this.directionCooldown -= 1;
+            // Check for bumpers
+            this.checkCollisionsWithBumpers();
+            // Move towards player if allowed
+            if (this.directionCooldown <= 0) {
+                var playerToEnemy = Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position);
+                this.direction = Point.Normalize(playerToEnemy);
+            }
+            // Move
+            _super.prototype.update.call(this);
         }
-        return EntityManager.instance;
+        // Player has been hit
+        else {
+            // Damage player
+        }
     };
-    EntityManager.prototype.getPlayer = function () {
-        return this.player;
+    Enemy.prototype.enemyHasCollidedWithPlayer = function () {
+        if (Utils.CirclesIntersect(EntityManager.getInstance().getPlayer().position, EntityManager.getInstance().getPlayer().radius, this.position, this.radius)) {
+            return true;
+        }
+        return false;
     };
-    EntityManager.prototype.getCircleBumpers = function () {
-        return this.circleBumpers;
+    Enemy.prototype.checkCollisionsWithBumpers = function () {
+        var collided = false;
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
+                collided = true;
+                // Give impulse similar to bullet bounce
+                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 20;
+            }
+        }
+        return collided;
     };
-    EntityManager.prototype.getRectBumpers = function () {
-        return this.rectBumpers;
-    };
-    EntityManager.prototype.setupBumpers = function () {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
-        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.rectBumpers.push(new RectangleBumper(new Point(500, 200), "blue", 2, 200, 100, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 200, 100, "black"));
-    };
-    return EntityManager;
-}());
+    return Enemy;
+}(CircleMovingEntity));
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
@@ -508,81 +528,46 @@ var Player = /** @class */ (function (_super) {
     };
     return Player;
 }(CircleMovingEntity));
-/// <reference path="bullet.ts" />
-/// <reference path="bumpers.ts" />
-/// <reference path="utils.ts" />
 /// <reference path="player.ts" />
-var CollisionManager = /** @class */ (function () {
-    function CollisionManager() {
+/// <reference path="bumpers.ts" />
+/// <reference path="enemies.ts" />
+var EntityManager = /** @class */ (function () {
+    function EntityManager() {
+        this.player = new Player();
+        this.circleBumpers = [];
+        this.rectBumpers = [];
+        this.enemies = [];
+        this.setupBumpers();
+        this.setupEnemies();
     }
-    CollisionManager.prototype.checkBulletCollisions = function (bullets, circleBumpers) {
-        for (var _i = 0, bullets_1 = bullets; _i < bullets_1.length; _i++) {
-            var bullet = bullets_1[_i];
-            this.checkBulletAgainstCircleBumpers(bullet, circleBumpers);
+    EntityManager.getInstance = function () {
+        if (!this.instance) {
+            EntityManager.instance = new EntityManager();
         }
+        return EntityManager.instance;
     };
-    CollisionManager.prototype.checkBulletAgainstCircleBumpers = function (bullet, circleBumpers) {
-        for (var _i = 0, circleBumpers_1 = circleBumpers; _i < circleBumpers_1.length; _i++) {
-            var bumper = circleBumpers_1[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
-                var colNormal = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
-                // Adjust bullet direction before colNorm * speed
-                bullet.direction = Point.Reflect(bullet.direction, colNormal);
-                // Adjust bullet position by collision normal to prevent further collisions
-                colNormal.x *= bullet.moveSpeed;
-                colNormal.y *= bullet.moveSpeed;
-                bullet.position.x -= colNormal.x;
-                bullet.position.y -= colNormal.y;
-            }
-        }
+    EntityManager.prototype.getPlayer = function () {
+        return this.player;
     };
-    CollisionManager.prototype.checkPlayerCollisions = function (player, circleBumpers, rectBumpers) {
-        for (var _i = 0, circleBumpers_2 = circleBumpers; _i < circleBumpers_2.length; _i++) {
-            var bumper = circleBumpers_2[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, player.position, player.radius)) {
-                // Adjust player position to avoid further collisions
-                var offset = Utils.ReboundOffset(bumper.position, player.position, player.moveSpeed);
-                player.position.x -= offset.x;
-                player.position.y -= offset.y;
-            }
-        }
-        for (var _a = 0, rectBumpers_1 = rectBumpers; _a < rectBumpers_1.length; _a++) {
-            var bumper = rectBumpers_1[_a];
-            // Distance check before performing collision detection
-            var distance = Point.Subtract(bumper.position, player.position);
-            var xIntersectLeft = false;
-            var xIntersectRight = false;
-            var yIntersectTop = false;
-            var yIntersectBot = false;
-            var colNormal = new Point();
-            // Do checks based on relative position; is distance x or y negative? 
-            if (distance.x > 0 && distance.x < player.radius) {
-                xIntersectLeft = true;
-                colNormal.x = -1;
-            }
-            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + player.radius) {
-                xIntersectRight = true;
-                colNormal.x = 1;
-            }
-            if (distance.y > 0 && distance.y < player.radius) {
-                yIntersectTop = true;
-                colNormal.y = -1;
-            }
-            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + player.radius) {
-                yIntersectBot = true;
-                colNormal.y = 1;
-            }
-            if (xIntersectLeft || xIntersectRight) {
-                if (yIntersectBot || yIntersectTop) {
-                    player.position.x += colNormal.x * player.moveSpeed;
-                    player.position.y += colNormal.y * player.moveSpeed;
-                    player.direction.x = 0;
-                    player.direction.y = 0;
-                }
-            }
-        }
+    EntityManager.prototype.getCircleBumpers = function () {
+        return this.circleBumpers;
     };
-    return CollisionManager;
+    EntityManager.prototype.getRectBumpers = function () {
+        return this.rectBumpers;
+    };
+    EntityManager.prototype.getEnemies = function () {
+        return this.enemies;
+    };
+    EntityManager.prototype.setupBumpers = function () {
+        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
+        this.rectBumpers.push(new RectangleBumper(new Point(500, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 200, 100, "black"));
+    };
+    EntityManager.prototype.setupEnemies = function () {
+        this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
+    };
+    return EntityManager;
 }());
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
@@ -663,8 +648,13 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     };
     GameState.prototype.updateAll = function () {
-        // Update player
+        // Update player (which updates bullets)
         this.entityMgr.getPlayer().update();
+        // Update enemies
+        for (var _i = 0, _a = this.entityMgr.getEnemies(); _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            enemy.update();
+        }
     };
     GameState.prototype.renderAll = function () {
         // Render player
@@ -684,6 +674,11 @@ var GameState = /** @class */ (function () {
         for (var _d = 0, _e = this.entityMgr.getRectBumpers(); _d < _e.length; _d++) {
             var bumper = _e[_d];
             bumper.draw();
+        }
+        // Render enemies
+        for (var _f = 0, _g = this.entityMgr.getEnemies(); _f < _g.length; _f++) {
+            var enemy = _g[_f];
+            enemy.draw();
         }
     };
     return GameState;
