@@ -69,6 +69,9 @@ var Utils = /** @class */ (function () {
         colNorm.y *= step;
         return colNorm;
     };
+    Utils.CircleToLineIntersect = function (p1, p2) {
+        return false;
+    };
     return Utils;
 }());
 /// <reference path="utils.ts" />
@@ -272,7 +275,7 @@ var RectangleBumper = /** @class */ (function (_super) {
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
-        var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 3) || this;
+        var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 5) || this;
         _this.lastDir = new Point(0, -1);
         _this.maxBullets = 30;
         _this.timeBetweenShots = 0;
@@ -364,7 +367,7 @@ var CollisionManager = /** @class */ (function () {
             }
         }
     };
-    CollisionManager.prototype.checkPlayerCollisions = function (player, circleBumpers) {
+    CollisionManager.prototype.checkPlayerCollisions = function (player, circleBumpers, rectBumpers) {
         for (var _i = 0, circleBumpers_2 = circleBumpers; _i < circleBumpers_2.length; _i++) {
             var bumper = circleBumpers_2[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, player.position, player.radius)) {
@@ -372,6 +375,41 @@ var CollisionManager = /** @class */ (function () {
                 var offset = Utils.ReboundOffset(bumper.position, player.position, player.moveSpeed);
                 player.position.x -= offset.x;
                 player.position.y -= offset.y;
+            }
+        }
+        for (var _a = 0, rectBumpers_1 = rectBumpers; _a < rectBumpers_1.length; _a++) {
+            var bumper = rectBumpers_1[_a];
+            // Distance check before performing collision detection
+            var distance = Point.Subtract(bumper.position, player.position);
+            var xIntersectLeft = false;
+            var xIntersectRight = false;
+            var yIntersectTop = false;
+            var yIntersectBot = false;
+            var colNormal = new Point();
+            // Do checks based on relative position; is distance x or y negative? 
+            if (distance.x > 0 && distance.x < player.radius) {
+                xIntersectLeft = true;
+                colNormal.x = -1;
+            }
+            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + player.radius) {
+                xIntersectRight = true;
+                colNormal.x = 1;
+            }
+            if (distance.y > 0 && distance.y < player.radius) {
+                yIntersectTop = true;
+                colNormal.y = -1;
+            }
+            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + player.radius) {
+                yIntersectBot = true;
+                colNormal.y = 1;
+            }
+            if (xIntersectLeft || xIntersectRight) {
+                if (yIntersectBot || yIntersectTop) {
+                    player.position.x += colNormal.x * player.moveSpeed;
+                    player.position.y += colNormal.y * player.moveSpeed;
+                    player.direction.x = 0;
+                    player.direction.y = 0;
+                }
             }
         }
     };
@@ -472,7 +510,7 @@ var GameState = /** @class */ (function () {
             this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
         }
         // Collision checks - player
-        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers);
+        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers, this.rectBumpers);
         // Update player
         this.player.update();
     };

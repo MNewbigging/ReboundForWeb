@@ -56,7 +56,7 @@ class GameState {
         this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
         }
         // Collision checks - player
-        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers);
+        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers, this.rectBumpers);
 
         // Update player
         this.player.update();

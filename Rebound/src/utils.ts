@@ -65,4 +65,8 @@ class Utils {
         colNorm.y *= step;
         return colNorm;
     }
+
+    public static CircleToLineIntersect(p1: Point, p2: Point): boolean {
+        return false;
+    }
 }
