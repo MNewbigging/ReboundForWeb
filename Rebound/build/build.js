@@ -415,6 +415,23 @@ var CollisionManager = /** @class */ (function () {
     };
     return CollisionManager;
 }());
+/// <reference path="player.ts" />
+/// <reference path="bumpers.ts" />
+var EntityManager = /** @class */ (function () {
+    function EntityManager() {
+        this.player = new Player();
+    }
+    EntityManager.getInstance = function () {
+        if (!this.instance) {
+            EntityManager.instance = new EntityManager();
+        }
+        return EntityManager.instance;
+    };
+    EntityManager.prototype.getPlayer = function () {
+        return this.player;
+    };
+    return EntityManager;
+}());
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
         var _this = this;
@@ -457,6 +474,7 @@ var KeyboardInput = /** @class */ (function () {
 /// <reference path="bumpers.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="collisionManager.ts" />
+/// <reference path="entityManager.ts" />
 var GameState = /** @class */ (function () {
     function GameState() {
         var _this = this;
@@ -476,7 +494,7 @@ var GameState = /** @class */ (function () {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
         this.colMgr = new CollisionManager();
-        this.player = new Player();
+        this.entityMgr = EntityManager.getInstance();
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.setupBumpers();
@@ -485,19 +503,19 @@ var GameState = /** @class */ (function () {
     GameState.prototype.defineInputActions = function () {
         // Add movement functions as callbacks
         // Left arrow / a
-        this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
-        this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
+        this.keyInput.addKeycodeCallback(37, this.entityMgr.getPlayer().moveLeft);
+        this.keyInput.addKeycodeCallback(65, this.entityMgr.getPlayer().moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight);
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight);
+        this.keyInput.addKeycodeCallback(39, this.entityMgr.getPlayer().moveRight);
+        this.keyInput.addKeycodeCallback(68, this.entityMgr.getPlayer().moveRight);
         // Up arrow / w
-        this.keyInput.addKeycodeCallback(38, this.player.moveUp);
-        this.keyInput.addKeycodeCallback(87, this.player.moveUp);
+        this.keyInput.addKeycodeCallback(38, this.entityMgr.getPlayer().moveUp);
+        this.keyInput.addKeycodeCallback(87, this.entityMgr.getPlayer().moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown);
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown);
+        this.keyInput.addKeycodeCallback(40, this.entityMgr.getPlayer().moveDown);
+        this.keyInput.addKeycodeCallback(83, this.entityMgr.getPlayer().moveDown);
         // Fire
-        this.keyInput.addKeycodeCallback(32, this.player.fireShot);
+        this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     };
     GameState.prototype.setupBumpers = function () {
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
@@ -506,20 +524,20 @@ var GameState = /** @class */ (function () {
     };
     GameState.prototype.updateAll = function () {
         // Collision checks - bullets
-        if (this.player.bullets.length > 0) {
-            this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
+        if (this.entityMgr.getPlayer().bullets.length > 0) {
+            this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.circleBumpers);
         }
         // Collision checks - player
-        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers, this.rectBumpers);
+        this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.circleBumpers, this.rectBumpers);
         // Update player
-        this.player.update();
+        this.entityMgr.getPlayer().update();
     };
     GameState.prototype.renderAll = function () {
         // Render player
-        this.player.draw();
+        this.entityMgr.getPlayer().draw();
         // Render player bullets
-        if (this.player.bullets.length > 0) {
-            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
+        if (this.entityMgr.getPlayer().bullets.length > 0) {
+            for (var _i = 0, _a = this.entityMgr.getPlayer().bullets; _i < _a.length; _i++) {
                 var bullet = _a[_i];
                 bullet.draw();
             }

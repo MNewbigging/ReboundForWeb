@@ -4,12 +4,13 @@
 /// <reference path="bumpers.ts" />
 /// <reference path="utils.ts" />
 /// <reference path="collisionManager.ts" />
+/// <reference path="entityManager.ts" />
 
 class GameState {
     public canvasUtils: CanvasUtils;
     public keyInput: KeyboardInput;
     public colMgr: CollisionManager;
-    public player: Player;
+    private entityMgr: EntityManager;
     private circleBumpers: CircleBumper[];
     private rectBumpers: RectangleBumper[];
 
@@ -17,7 +18,7 @@ class GameState {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
         this.colMgr = new CollisionManager();
-        this.player = new Player();
+        this.entityMgr = EntityManager.getInstance();
         this.circleBumpers = [];
         this.rectBumpers = [];
 
@@ -28,19 +29,19 @@ class GameState {
     private defineInputActions(): void {
         // Add movement functions as callbacks
         // Left arrow / a
-        this.keyInput.addKeycodeCallback(37, this.player.moveLeft);
-        this.keyInput.addKeycodeCallback(65, this.player.moveLeft);
+        this.keyInput.addKeycodeCallback(37, this.entityMgr.getPlayer().moveLeft);
+        this.keyInput.addKeycodeCallback(65, this.entityMgr.getPlayer().moveLeft);
         // Right arrow / d
-        this.keyInput.addKeycodeCallback(39, this.player.moveRight);
-        this.keyInput.addKeycodeCallback(68, this.player.moveRight);
+        this.keyInput.addKeycodeCallback(39, this.entityMgr.getPlayer().moveRight);
+        this.keyInput.addKeycodeCallback(68, this.entityMgr.getPlayer().moveRight);
         // Up arrow / w
-        this.keyInput.addKeycodeCallback(38, this.player.moveUp);
-        this.keyInput.addKeycodeCallback(87, this.player.moveUp);
+        this.keyInput.addKeycodeCallback(38, this.entityMgr.getPlayer().moveUp);
+        this.keyInput.addKeycodeCallback(87, this.entityMgr.getPlayer().moveUp);
         // down arrow / s
-        this.keyInput.addKeycodeCallback(40, this.player.moveDown);
-        this.keyInput.addKeycodeCallback(83, this.player.moveDown);
+        this.keyInput.addKeycodeCallback(40, this.entityMgr.getPlayer().moveDown);
+        this.keyInput.addKeycodeCallback(83, this.entityMgr.getPlayer().moveDown);
         // Fire
-        this.keyInput.addKeycodeCallback(32, this.player.fireShot);
+        this.keyInput.addKeycodeCallback(32, this.entityMgr.getPlayer().fireShot);
     }
 
     private setupBumpers(): void {
@@ -52,25 +53,25 @@ class GameState {
 
     public updateAll(): void {
         // Collision checks - bullets
-        if (this.player.bullets.length > 0) {
-        this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
+        if (this.entityMgr.getPlayer().bullets.length > 0) {
+        this.colMgr.checkBulletCollisions(this.entityMgr.getPlayer().bullets, this.circleBumpers);
         }
         // Collision checks - player
-        this.colMgr.checkPlayerCollisions(this.player, this.circleBumpers, this.rectBumpers);
+        this.colMgr.checkPlayerCollisions(this.entityMgr.getPlayer(), this.circleBumpers, this.rectBumpers);
 
         // Update player
-        this.player.update();
+        this.entityMgr.getPlayer().update();
     }
 
 
 
     public renderAll(): void {
         // Render player
-        this.player.draw();
+        this.entityMgr.getPlayer().draw();
 
         // Render player bullets
-        if (this.player.bullets.length > 0) {
-            for(let bullet of this.player.bullets) {
+        if (this.entityMgr.getPlayer().bullets.length > 0) {
+            for(let bullet of this.entityMgr.getPlayer().bullets) {
                 bullet.draw();
             }
         }
