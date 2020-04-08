@@ -125,6 +125,9 @@ var Utils = /** @class */ (function () {
         }
         return circleInside;
     };
+    Utils.getRandomNumber = function (max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    };
     return Utils;
 }());
 /// <reference path="utils.ts" />
@@ -605,12 +608,15 @@ var Player = /** @class */ (function (_super) {
 /// <reference path="player.ts" />
 /// <reference path="bumpers.ts" />
 /// <reference path="enemies.ts" />
+/// <reference path="canvasUtils.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
+        this.maxEnemyCount = 10;
         this.player = new Player();
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
+        this.spawnPoints = [];
         this.setupBumpers();
         this.setupEnemies();
     }
@@ -633,12 +639,24 @@ var EntityManager = /** @class */ (function () {
         return this.enemies;
     };
     EntityManager.prototype.setupBumpers = function () {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
-        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 600, 100, "black"));
+        var lineWidth = 1;
+        this.circleBumpers.push(new CircleBumper(new Point(460, 320), "orange", lineWidth, 60));
+        var rectWidth = 300;
+        var rectHeight = 80;
+        this.rectBumpers.push(new RectangleBumper(new Point(600, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(40, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(420, -100), "blue", lineWidth, rectHeight, rectWidth, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(420, 460), "blue", lineWidth, rectHeight, rectWidth, "black"));
     };
     EntityManager.prototype.setupEnemies = function () {
         this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
+        var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
+        var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
+        this.spawnPoints.push(new Point(-50, -50));
+        this.spawnPoints.push(new Point(canvasWidth + 50, -50));
+        this.spawnPoints.push(new Point(canvasWidth, canvasHeight + 50));
+        this.spawnPoints.push(new Point(-50, canvasHeight));
+        this.spawnPoints.push(new Point(canvasWidth / 2, canvasHeight + 50));
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -647,12 +665,22 @@ var EntityManager = /** @class */ (function () {
             enemy.update();
         }
         this.removeDeadEnemies();
+        this.spawnEnemies();
     };
     EntityManager.prototype.removeDeadEnemies = function () {
         for (var i = 0; i < this.enemies.length; i++) {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
             }
+        }
+    };
+    EntityManager.prototype.spawnEnemies = function () {
+        if (this.enemies.length < this.maxEnemyCount) {
+            // Get random spawn point
+            this.enemies.push(new Enemy(this.spawnPoints[Utils.getRandomNumber(this.spawnPoints.length)], "black", 1, 15, new Point(), 3));
+        }
+        else {
+            console.log("max enemies");
         }
     };
     EntityManager.prototype.renderEntities = function () {

@@ -131,4 +131,8 @@ class Utils {
 
         return circleInside;
     }
+
+    public static getRandomNumber(max: number): number {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
 }
