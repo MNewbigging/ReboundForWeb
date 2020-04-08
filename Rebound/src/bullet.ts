@@ -9,7 +9,7 @@ class Bullet extends CircleMovingEntity {
     */
 
     constructor(p: Point, dir: Point) {
-        super(p, "red", 1, 5, dir, 3);
+        super(p, "red", 1, 5, dir, 12);
     }    
 
     update(): void {
@@ -65,10 +65,38 @@ class Bullet extends CircleMovingEntity {
             let distance: Point = Point.Subtract(rectCenter, this.position);
             if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
                 this.color = "black";
+                for (let i: number = 0; i < bumper.vertices.length; i++) {
+                    if(i === 3) {
+                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
+                            this.adjustDirectionFromRectCollision(i);
+                            break;
+                        }
+                    }
+                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i+1], this.position, this.radius)) {
+                        this.adjustDirectionFromRectCollision(i);
+                        break;
+                    }
+                }
             }
             else {
                 this.color = "red";
             }
         }
     }
+
+    private adjustDirectionFromRectCollision(side: number): void {
+        if (side === 0 || side === 2) {
+            this.direction.y = -this.direction.y;
+        }
+        else if (side === 1 || side === 3) {
+            this.direction.x = -this.direction.x;
+        }
+        // Move back to avoid futher collisions
+        this.position.x += this.direction.x * this.moveSpeed;
+        this.position.y += this.direction.y * this.moveSpeed;
+    }
+
+
+
+
 }

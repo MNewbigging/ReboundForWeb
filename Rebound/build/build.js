@@ -21,6 +21,9 @@ var Point = /** @class */ (function () {
         this.x = xVal;
         this.y = yVal;
     }
+    Point.Add = function (p1, p2) {
+        return new Point(p1.x + p2.x, p1.y + p2.y);
+    };
     Point.Subtract = function (left, right) {
         return new Point(left.x - right.x, left.y - right.y);
     };
@@ -72,6 +75,31 @@ var Utils = /** @class */ (function () {
     // p1, p2 are for line end points
     // center is center point of circle 
     Utils.CircleToLineIntersect = function (p1, p2, center, radius) {
+        // Find closest point on line from center given
+        var closestPoint = new Point();
+        // Get the line from two points given, normalize
+        var line = Point.Subtract(p2, p1);
+        var lineNorm = Point.Normalize(line);
+        // Get distance form player to p1
+        var p1Distance = Point.Subtract(center, p1);
+        // Use dot product to check if p1 is closest point
+        var projection = Point.Dot(p1Distance, lineNorm);
+        if (projection < 0) {
+            closestPoint = p1;
+        }
+        else if (projection > Point.Length(line)) {
+            closestPoint = p2;
+        }
+        else {
+            // Closest point is more central on the line
+            var projectionVelocity = new Point(lineNorm.x * projection, lineNorm.y * projection);
+            closestPoint = Point.Add(projectionVelocity, p1);
+        }
+        var closestDifference = Point.Subtract(center, closestPoint);
+        var closestLength = Point.Length(closestDifference);
+        if (closestLength <= radius) {
+            return true;
+        }
         return false;
     };
     return Utils;
@@ -231,7 +259,7 @@ var Bullet = /** @class */ (function (_super) {
     public damageMultiplier: number = 0;
     */
     function Bullet(p, dir) {
-        var _this = _super.call(this, p, "red", 1, 5, dir, 3) || this;
+        var _this = _super.call(this, p, "red", 1, 5, dir, 12) || this;
         _this.alive = true; // does this bullet exist
         return _this;
     }
@@ -282,15 +310,39 @@ var Bullet = /** @class */ (function (_super) {
             var distance = Point.Subtract(rectCenter, this.position);
             if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
                 this.color = "black";
+                for (var i = 0; i < bumper.vertices.length; i++) {
+                    if (i === 3) {
+                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
+                            this.adjustDirectionFromRectCollision(i);
+                            break;
+                        }
+                    }
+                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
+                        this.adjustDirectionFromRectCollision(i);
+                        break;
+                    }
+                }
             }
             else {
                 this.color = "red";
             }
         }
     };
+    Bullet.prototype.adjustDirectionFromRectCollision = function (side) {
+        if (side === 0 || side === 2) {
+            this.direction.y = -this.direction.y;
+        }
+        else if (side === 1 || side === 3) {
+            this.direction.x = -this.direction.x;
+        }
+        // Move back to avoid futher collisions
+        this.position.x += this.direction.x * this.moveSpeed;
+        this.position.y += this.direction.y * this.moveSpeed;
+    };
     return Bullet;
 }(CircleMovingEntity));
 /// <reference path="entities.ts" />
+/// <reference path="utils.ts" />
 var CircleBumper = /** @class */ (function (_super) {
     __extends(CircleBumper, _super);
     function CircleBumper() {
@@ -300,9 +352,18 @@ var CircleBumper = /** @class */ (function (_super) {
 }(CircleEntity));
 var RectangleBumper = /** @class */ (function (_super) {
     __extends(RectangleBumper, _super);
-    function RectangleBumper() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function RectangleBumper(p, col, lw, w, h, stroke) {
+        var _this = _super.call(this, p, col, lw, w, h, stroke) || this;
+        _this.vertices = [];
+        _this.findVertices();
+        return _this;
     }
+    RectangleBumper.prototype.findVertices = function () {
+        this.vertices.push(this.position);
+        this.vertices.push(new Point(this.position.x + this.width, this.position.y));
+        this.vertices.push(new Point(this.position.x + this.width, this.position.y + this.height));
+        this.vertices.push(new Point(this.position.x, this.position.y + this.height));
+    };
     return RectangleBumper;
 }(RectangleEntity));
 /// <reference path="player.ts" />
@@ -332,7 +393,8 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.setupBumpers = function () {
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(500, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 200, 100, "black"));
     };
     return EntityManager;
 }());

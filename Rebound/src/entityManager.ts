@@ -37,6 +37,7 @@ class EntityManager {
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
 
-        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(500, 200), "blue", 2, 200, 100, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(200, 200), "blue", 2, 200, 100, "black"));
     }
 }

@@ -7,6 +7,13 @@ class Point {
         this.y = yVal;
     }
 
+    public static Add(p1: Point, p2: Point) {
+        return new Point(
+            p1.x + p2.x,
+            p1.y + p2.y
+        );
+    }
+
     public static Subtract(left: Point, right: Point): Point {
         return new Point(
             left.x - right.x,
@@ -68,6 +75,34 @@ class Utils {
     // p1, p2 are for line end points
     // center is center point of circle 
     public static CircleToLineIntersect(p1: Point, p2: Point, center: Point, radius: number): boolean {
+        // Find closest point on line from center given
+        let closestPoint: Point = new Point();
+        // Get the line from two points given, normalize
+        let line: Point = Point.Subtract(p2, p1);
+        let lineNorm: Point = Point.Normalize(line);
+        // Get distance form player to p1
+        let p1Distance: Point = Point.Subtract(center, p1);
+        // Use dot product to check if p1 is closest point
+        let projection: number = Point.Dot(p1Distance, lineNorm);
+
+        if (projection < 0) {
+            closestPoint = p1;
+        }
+        else if (projection > Point.Length(line)) {
+            closestPoint = p2;
+        }
+        else {
+            // Closest point is more central on the line
+            let projectionVelocity: Point = new Point(lineNorm.x * projection, lineNorm.y * projection);
+            closestPoint = Point.Add(projectionVelocity, p1);
+        }
+
+        let closestDifference: Point = Point.Subtract(center, closestPoint);
+        let closestLength = Point.Length(closestDifference);
+        if (closestLength <= radius) {
+            return true;
+        }
+
         return false;
     }
 
