@@ -3,18 +3,21 @@
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="bumpers.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="collisionManager.ts" />
 
 class GameState {
     public canvasUtils: CanvasUtils;
     public keyInput: KeyboardInput;
+    public colMgr: CollisionManager;
     public player: Player;
-    private bumpers: CircleBumper[];
+    private circleBumpers: CircleBumper[];
 
     constructor() {
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
+        this.colMgr = new CollisionManager();
         this.player = new Player();
-        this.bumpers = [];
+        this.circleBumpers = [];
 
         this.setupBumpers();
         this.defineInputActions();
@@ -39,21 +42,25 @@ class GameState {
     }
 
     private setupBumpers(): void {
-        this.bumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
-        this.bumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
-        this.bumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
-        this.bumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
-        this.bumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.bumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
-        this.bumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange", 5, 70));
+        this.circleBumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
+        this.circleBumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
+        this.circleBumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
+        this.circleBumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
     }
 
     public updateAll(): void {
         // Collision checks
         if (this.player.bullets.length > 0) {
+        this.colMgr.checkBulletCollisions(this.player.bullets, this.circleBumpers);
+        }
+        /*
+        if (this.player.bullets.length > 0) {
             for (let bullet of this.player.bullets) {
                 // Check for bumper collisions
-                for (let bumper of this.bumpers) {
+                for (let bumper of this.circleBumpers) {
                     if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
                         let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
                         // Adjust bullet direction
@@ -67,6 +74,7 @@ class GameState {
                 }
             }
         }
+        */
         // Update player
         this.player.update();
     }
@@ -85,7 +93,7 @@ class GameState {
         }
 
         // Render bumpers
-        for(let bumper of this.bumpers) {
+        for(let bumper of this.circleBumpers) {
             bumper.draw();
         }
     }
