@@ -32,7 +32,10 @@ class Point {
     }
 
     public static Reflect(p1: Point, p2: Point): Point {
-        return new Point();
+        // p1 - 2 * Dot(p1, p2) * p2;
+        let scalar: number = 2 * this.Dot(p1, p2);
+        let scaledPoint: Point = new Point(p2.x * scalar, p2.y * scalar);
+        return new Point(p1.x - scaledPoint.x, p1.y - scaledPoint.y);
     }
 
     public static Print(point: Point, pre?: string): void {

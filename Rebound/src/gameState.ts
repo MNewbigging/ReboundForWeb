@@ -55,13 +55,15 @@ class GameState {
                 // Check for bumper collisions
                 for (let bumper of this.bumpers) {
                     if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
-                        // Adjust bullet position by collision normal to prevent further collisions
                         let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
+                        // Adjust bullet direction
+                        bullet.direction = Point.Reflect(bullet.direction, colNormal);
+                        Point.Print(bullet.direction); 
+                        // Adjust bullet position by collision normal to prevent further collisions
                         colNormal.x *= bullet.moveSpeed;
                         colNormal.y *= bullet.moveSpeed;
                         bullet.position.x = bullet.position.x - colNormal.x;
                         bullet.position.y = bullet.position.y - colNormal.y;
-                        // Adjust bullet direction 
                     }
                 }
             }

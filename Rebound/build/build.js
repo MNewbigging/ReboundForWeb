@@ -38,7 +38,10 @@ var Point = /** @class */ (function () {
         return (p1.x * p2.x) + (p1.y * p2.y);
     };
     Point.Reflect = function (p1, p2) {
-        return new Point();
+        // p1 - 2 * Dot(p1, p2) * p2;
+        var scalar = 2 * this.Dot(p1, p2);
+        var scaledPoint = new Point(p2.x * scalar, p2.y * scalar);
+        return new Point(p1.x - scaledPoint.x, p1.y - scaledPoint.y);
     };
     Point.Print = function (point, pre) {
         if (!pre) {
@@ -383,13 +386,15 @@ var GameState = /** @class */ (function () {
                 for (var _b = 0, _c = this.bumpers; _b < _c.length; _b++) {
                     var bumper = _c[_b];
                     if (Utils.CirclesIntersect(bumper.position, bumper.radius, bullet.position, bullet.radius)) {
-                        // Adjust bullet position by collision normal to prevent further collisions
                         var colNormal = Utils.getTargetDirectionNormal(bumper.position, bullet.position);
+                        // Adjust bullet direction
+                        bullet.direction = Point.Reflect(bullet.direction, colNormal);
+                        Point.Print(bullet.direction);
+                        // Adjust bullet position by collision normal to prevent further collisions
                         colNormal.x *= bullet.moveSpeed;
                         colNormal.y *= bullet.moveSpeed;
                         bullet.position.x = bullet.position.x - colNormal.x;
                         bullet.position.y = bullet.position.y - colNormal.y;
-                        // Adjust bullet direction 
                     }
                 }
             }
