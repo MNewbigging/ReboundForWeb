@@ -11,6 +11,7 @@ class GameState {
     public colMgr: CollisionManager;
     public player: Player;
     private circleBumpers: CircleBumper[];
+    private rectBumpers: RectangleBumper[];
 
     constructor() {
         this.canvasUtils = CanvasUtils.getInstance();
@@ -18,6 +19,7 @@ class GameState {
         this.colMgr = new CollisionManager();
         this.player = new Player();
         this.circleBumpers = [];
+        this.rectBumpers = [];
 
         this.setupBumpers();
         this.defineInputActions();
@@ -42,13 +44,10 @@ class GameState {
     }
 
     private setupBumpers(): void {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange",-5, 70));
-        this.circleBumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
-        this.circleBumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.circleBumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
-        this.circleBumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
+
+        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
     }
 
     public updateAll(): void {
@@ -78,6 +77,10 @@ class GameState {
 
         // Render bumpers
         for(let bumper of this.circleBumpers) {
+            bumper.draw();
+        }
+
+        for (let bumper of this.rectBumpers) {
             bumper.draw();
         }
     }

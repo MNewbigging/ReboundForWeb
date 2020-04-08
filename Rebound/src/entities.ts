@@ -19,6 +19,47 @@ interface ICircleEntity {
     radius: number;
 }
 
+interface IRectangleEntity {
+    width: number;
+    height: number;
+    strokeStyle: string;
+}
+
+class RectangleEntity implements IEntity, IRectangleEntity {
+    // IEntity fields 
+    canvasUtils: CanvasUtils;
+    position: Point;
+    color: string;
+    lineWidth: number;
+    // IRectangleEntity fields
+    width: number;
+    height: number;
+    strokeStyle: string;
+
+    constructor(p: Point, col: string, lw: number, w: number, h: number, stroke: string) {
+        this.canvasUtils = CanvasUtils.getInstance();
+        this.position = p;
+        this.color = col;
+        this.lineWidth = lw;
+        this.width = w;
+        this.height = h;
+        this.strokeStyle = stroke;
+    }
+
+
+    draw(): void {
+        let canvasContext = this.canvasUtils.getCanvasContext();
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.lineWidth = this.lineWidth;
+        canvasContext.strokeStyle = this.strokeStyle;
+        canvasContext.fillStyle = this.color;
+        canvasContext.rect(this.position.x, this.position.y, this.width, this.height);
+        canvasContext.stroke();
+        canvasContext.restore();
+    }
+}
+
 class CircleEntity implements IEntity, ICircleEntity {
     // IEntity fields default values
     canvasUtils: CanvasUtils;

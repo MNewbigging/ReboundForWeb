@@ -157,6 +157,29 @@ var CanvasUtils = /** @class */ (function () {
 }());
 /// <reference path= "canvasUtils.ts" />
 /// <reference path="utils.ts" />
+var RectangleEntity = /** @class */ (function () {
+    function RectangleEntity(p, col, lw, w, h, stroke) {
+        this.canvasUtils = CanvasUtils.getInstance();
+        this.position = p;
+        this.color = col;
+        this.lineWidth = lw;
+        this.width = w;
+        this.height = h;
+        this.strokeStyle = stroke;
+    }
+    RectangleEntity.prototype.draw = function () {
+        var canvasContext = this.canvasUtils.getCanvasContext();
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.lineWidth = this.lineWidth;
+        canvasContext.strokeStyle = this.strokeStyle;
+        canvasContext.fillStyle = this.color;
+        canvasContext.rect(this.position.x, this.position.y, this.width, this.height);
+        canvasContext.stroke();
+        canvasContext.restore();
+    };
+    return RectangleEntity;
+}());
 var CircleEntity = /** @class */ (function () {
     function CircleEntity(p, col, lw, r) {
         this.canvasUtils = CanvasUtils.getInstance();
@@ -235,6 +258,13 @@ var CircleBumper = /** @class */ (function (_super) {
     }
     return CircleBumper;
 }(CircleEntity));
+var RectangleBumper = /** @class */ (function (_super) {
+    __extends(RectangleBumper, _super);
+    function RectangleBumper() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return RectangleBumper;
+}(RectangleEntity));
 /// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
@@ -410,6 +440,7 @@ var GameState = /** @class */ (function () {
         this.colMgr = new CollisionManager();
         this.player = new Player();
         this.circleBumpers = [];
+        this.rectBumpers = [];
         this.setupBumpers();
         this.defineInputActions();
     }
@@ -431,13 +462,9 @@ var GameState = /** @class */ (function () {
         this.keyInput.addKeycodeCallback(32, this.player.fireShot);
     };
     GameState.prototype.setupBumpers = function () {
-        this.circleBumpers.push(new CircleBumper(new Point(500, 150), "orange", -5, 70));
-        this.circleBumpers.push(new CircleBumper(new Point(250, 300), "orange", 5, 50));
-        this.circleBumpers.push(new CircleBumper(new Point(750, 300), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(500, 500), "orange", 5, 40));
         this.circleBumpers.push(new CircleBumper(new Point(200, 600), "orange", 5, 80));
-        this.circleBumpers.push(new CircleBumper(new Point(750, 650), "orange", 5, 40));
-        this.circleBumpers.push(new CircleBumper(new Point(500, 800), "orange", 5, 40));
+        this.rectBumpers.push(new RectangleBumper(new Point(400, 200), "blue", 2, 200, 100, "black"));
     };
     GameState.prototype.updateAll = function () {
         // Collision checks - bullets
@@ -462,6 +489,10 @@ var GameState = /** @class */ (function () {
         // Render bumpers
         for (var _b = 0, _c = this.circleBumpers; _b < _c.length; _b++) {
             var bumper = _c[_b];
+            bumper.draw();
+        }
+        for (var _d = 0, _e = this.rectBumpers; _d < _e.length; _d++) {
+            var bumper = _e[_d];
             bumper.draw();
         }
     };
