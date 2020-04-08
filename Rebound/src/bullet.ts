@@ -50,6 +50,7 @@ class Bullet extends CircleMovingEntity {
                 colNormal.y *= this.moveSpeed;
                 this.position.x -= colNormal.x;
                 this.position.y -= colNormal.y;
+                break;
             }
         }
     }
@@ -63,7 +64,7 @@ class Bullet extends CircleMovingEntity {
                 bumper.position.y + bumper.height / 2
             );
             let distance: Point = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
                 for (let i: number = 0; i < bumper.vertices.length; i++) {
                     if(i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
@@ -76,6 +77,7 @@ class Bullet extends CircleMovingEntity {
                         break;
                     }
                 }
+            break;
             }
         }
     }

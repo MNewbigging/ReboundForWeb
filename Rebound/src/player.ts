@@ -55,47 +55,6 @@ class Player extends CircleMovingEntity {
         }
     }
 
-    private playerWillCollideWithBumper(): boolean {
-        let playerWillCollide: boolean = false;
-        // Simulate where player will be next frame
-        let nextPos = new Point(this.position.x, this.position.y);
-        let speed: number = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        nextPos.x += (this.direction.x * speed);
-        nextPos.y += (this.direction.y * speed);
-
-        // Use the next frame pos to check for collisions
-        for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
-                playerWillCollide = true;
-            }
-        }
-
-        for (let bumper of EntityManager.getInstance().getRectBumpers()) {
-            // Distance check before performing collision detection
-            let distance: Point = Point.Subtract(bumper.position, nextPos);
-            let xIntersect: boolean = false;
-            let yIntersect: boolean = false;
-            // Do checks based on relative position; is distance x or y negative? 
-            if (distance.x > 0 && distance.x < this.radius) {
-                xIntersect = true;
-            }
-            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
-                xIntersect = true;
-            }
-            if(distance.y > 0 && distance.y < this.radius) {
-                yIntersect = true;
-            }
-            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
-                yIntersect = true;
-            }
-            if (xIntersect && yIntersect) {
-                playerWillCollide = true;
-            }
-        }
-
-        return playerWillCollide;
-    }
-
     update(): void {
         // Only move the player if it won't collide with an obstacle
         if (!this.playerWillCollideWithBumper()) {
@@ -126,5 +85,50 @@ class Player extends CircleMovingEntity {
             }
         }       
     }
+
+    private playerWillCollideWithBumper(): boolean {
+        let playerWillCollide: boolean = false;
+        // Simulate where player will be next frame
+        let nextPos = new Point(this.position.x, this.position.y);
+        let speed: number = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        nextPos.x += (this.direction.x * speed);
+        nextPos.y += (this.direction.y * speed);
+
+        // Use the next frame pos to check for collisions
+        for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
+                playerWillCollide = true;
+                break;
+            }
+        }
+
+        for (let bumper of EntityManager.getInstance().getRectBumpers()) {
+            // Distance check before performing collision detection
+            let distance: Point = Point.Subtract(bumper.position, nextPos);
+            let xIntersect: boolean = false;
+            let yIntersect: boolean = false;
+            // Do checks based on relative position; is distance x or y negative? 
+            if (distance.x > 0 && distance.x < this.radius) {
+                xIntersect = true;
+            }
+            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
+                xIntersect = true;
+            }
+            if(distance.y > 0 && distance.y < this.radius) {
+                yIntersect = true;
+            }
+            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
+                yIntersect = true;
+            }
+            if (xIntersect && yIntersect) {
+                playerWillCollide = true;
+                break;
+            }
+        }
+
+        return playerWillCollide;
+    }
+
+
 
 }

@@ -298,6 +298,7 @@ var Bullet = /** @class */ (function (_super) {
                 colNormal.y *= this.moveSpeed;
                 this.position.x -= colNormal.x;
                 this.position.y -= colNormal.y;
+                break;
             }
         }
     };
@@ -308,7 +309,7 @@ var Bullet = /** @class */ (function (_super) {
             // Center point of rect bumper
             var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
             var distance = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.25 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
                 for (var i = 0; i < bumper.vertices.length; i++) {
                     if (i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
@@ -321,6 +322,7 @@ var Bullet = /** @class */ (function (_super) {
                         break;
                     }
                 }
+                break;
             }
         }
     };
@@ -399,18 +401,29 @@ var Enemy = /** @class */ (function (_super) {
         return false;
     };
     Enemy.prototype.checkCollisionsWithBumpers = function () {
-        var collided = false;
+        this.checkCollisionsWithCircleBumpers();
+        this.checkCollisionsWithRectBumpers();
+    };
+    Enemy.prototype.checkCollisionsWithCircleBumpers = function () {
         for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
-                collided = true;
                 // Give impulse similar to bullet bounce
                 var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
                 this.direction = Point.Reflect(this.direction, colNormal);
                 this.directionCooldown = 20;
             }
         }
-        return collided;
+    };
+    Enemy.prototype.checkCollisionsWithRectBumpers = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
+            var distance = Point.Subtract(rectCenter, this.position);
+            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+                // if distance.x is positive, this is to the left of center
+            }
+        }
     };
     return Enemy;
 }(CircleMovingEntity));
@@ -461,45 +474,6 @@ var Player = /** @class */ (function (_super) {
         _this.bullets = [];
         return _this;
     }
-    Player.prototype.playerWillCollideWithBumper = function () {
-        var playerWillCollide = false;
-        // Simulate where player will be next frame
-        var nextPos = new Point(this.position.x, this.position.y);
-        var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
-        nextPos.x += (this.direction.x * speed);
-        nextPos.y += (this.direction.y * speed);
-        // Use the next frame pos to check for collisions
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
-            var bumper = _a[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
-                playerWillCollide = true;
-            }
-        }
-        for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
-            var bumper = _c[_b];
-            // Distance check before performing collision detection
-            var distance = Point.Subtract(bumper.position, nextPos);
-            var xIntersect = false;
-            var yIntersect = false;
-            // Do checks based on relative position; is distance x or y negative? 
-            if (distance.x > 0 && distance.x < this.radius) {
-                xIntersect = true;
-            }
-            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
-                xIntersect = true;
-            }
-            if (distance.y > 0 && distance.y < this.radius) {
-                yIntersect = true;
-            }
-            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
-                yIntersect = true;
-            }
-            if (xIntersect && yIntersect) {
-                playerWillCollide = true;
-            }
-        }
-        return playerWillCollide;
-    };
     Player.prototype.update = function () {
         // Only move the player if it won't collide with an obstacle
         if (!this.playerWillCollideWithBumper()) {
@@ -525,6 +499,47 @@ var Player = /** @class */ (function (_super) {
                 this.bullets[i].update();
             }
         }
+    };
+    Player.prototype.playerWillCollideWithBumper = function () {
+        var playerWillCollide = false;
+        // Simulate where player will be next frame
+        var nextPos = new Point(this.position.x, this.position.y);
+        var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
+        nextPos.x += (this.direction.x * speed);
+        nextPos.y += (this.direction.y * speed);
+        // Use the next frame pos to check for collisions
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
+                playerWillCollide = true;
+                break;
+            }
+        }
+        for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
+            var bumper = _c[_b];
+            // Distance check before performing collision detection
+            var distance = Point.Subtract(bumper.position, nextPos);
+            var xIntersect = false;
+            var yIntersect = false;
+            // Do checks based on relative position; is distance x or y negative? 
+            if (distance.x > 0 && distance.x < this.radius) {
+                xIntersect = true;
+            }
+            else if (distance.x <= 0 && Math.abs(distance.x) < bumper.width + this.radius) {
+                xIntersect = true;
+            }
+            if (distance.y > 0 && distance.y < this.radius) {
+                yIntersect = true;
+            }
+            else if (distance.y <= 0 && Math.abs(distance.y) < bumper.height + this.radius) {
+                yIntersect = true;
+            }
+            if (xIntersect && yIntersect) {
+                playerWillCollide = true;
+                break;
+            }
+        }
+        return playerWillCollide;
     };
     return Player;
 }(CircleMovingEntity));
