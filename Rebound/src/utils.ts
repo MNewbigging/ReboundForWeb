@@ -125,4 +125,34 @@ class Utils {
     public static getRandomNumber(max: number): number {
         return Math.floor(Math.random() * Math.floor(max));
     }
+
+    public static getClosestPointOnRectToCircle(rectPos: Point, rectWidth: number, rectHeight: number, circlePos: Point): Point {
+        let closestXpoint: number;
+        let rectLeftPos: number = rectPos.x;
+        let rectRightPos: number = rectPos.x + rectWidth;
+        // check if already within x bounds of rect
+        if (circlePos.x > rectLeftPos && circlePos.x < rectRightPos) {
+            closestXpoint = circlePos.x;
+        }
+        else {
+            // If not already within bounds, find closest x value
+            let distanceLeft: number = Math.abs(rectLeftPos - circlePos.x);
+            let distanceRight: number = Math.abs(rectRightPos - circlePos.x);
+            closestXpoint = (Math.min(distanceLeft, distanceRight) === distanceLeft) ? rectLeftPos : rectRightPos;
+        }
+
+        let closestYpoint: number;
+        let rectTopPos: number = rectPos.y;
+        let rectBotPos: number = rectPos.y + rectHeight;
+        if (circlePos.y > rectTopPos && circlePos.y < rectBotPos) {
+            closestYpoint = circlePos.y;
+        }
+        else {
+            let distanceTop: number = Math.abs(rectTopPos - circlePos.y);
+            let distanceBot: number = Math.abs(rectBotPos - circlePos.y);
+            closestYpoint = (Math.min(distanceTop, distanceBot) === distanceTop) ? rectTopPos : rectBotPos;
+        }
+        
+        return new Point(closestXpoint, closestYpoint);
+    }
 }

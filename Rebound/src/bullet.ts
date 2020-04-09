@@ -8,7 +8,7 @@ class Bullet extends CircleMovingEntity {
     
 
     constructor(p: Point, dir: Point) {
-        super(p, "grey", 1, 5, dir, 12);
+        super(p, "grey", 1, 5, dir, 8);
     }    
 
     update(): void {
@@ -61,42 +61,33 @@ class Bullet extends CircleMovingEntity {
         bumperLoop:
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
-                for (let i: number = 0; i < bumper.vertices.length; i++) {
-                    if(i === 3) {
-                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
-                            this.adjustDirectionFromRectCollision(i, bumper);
-                            break bumperLoop;
-                        }
-                    }
-                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i+1], this.position, this.radius)) {
-                        this.adjustDirectionFromRectCollision(i, bumper);
-                        break bumperLoop;
-                    }
-                }
+                // Treat this position as previous (which was outside of collision area)
+                let prevPos: Point = new Point(
+                    this.position.x -= this.direction.x * this.moveSpeed,
+                    this.position.y -= this.direction.y * this.moveSpeed
+                ); 
+
+                // Get collision normal
+                let closestPoint: Point = Utils.getClosestPointOnRectToCircle(bumper.position, bumper.width, bumper.height, prevPos);
+                let colNormal: Point = Utils.getTargetDirectionNormal(closestPoint, prevPos);
+                
+                // Reflect
+                this.direction = Point.Reflect(this.direction, colNormal);
+
+                // Apply other rebound effects
+                this.applyReboundEffects();
+
+                // Can't hit more than one bumper at once, break
+                break bumperLoop;
             }
         }
     }
 
-    private adjustDirectionFromRectCollision(side: number, bumper: RectangleBumper): void {
-        if (side === 0 || side === 2) {
-            this.direction.y = -this.direction.y;
-        }
-        else if (side === 1 || side === 3) {
-            this.direction.x = -this.direction.x;
-        }
-        // Move back to avoid futher collisions
-        this.position.x += this.direction.x * this.moveSpeed;
-        this.position.y += this.direction.y * this.moveSpeed;
-
-
-
-        // Apply other rebound effects
-        this.applyReboundEffects();
-    }
-
     private applyReboundEffects(): void {
         this.damageMultiplier += 1;
-        this.radius += this.reboundRadiusGrowthStep;
+        // TODO - move bullet out of colliding rect by penetration distance + new radius (to avoid further collisions)
+        // OR increase radius over time, or after delay, so bullet has rebounded already when it grows
+        //this.radius += this.reboundRadiusGrowthStep;
         this.color = "red";
     }
 

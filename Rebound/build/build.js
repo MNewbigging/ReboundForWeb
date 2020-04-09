@@ -125,6 +125,33 @@ var Utils = /** @class */ (function () {
     Utils.getRandomNumber = function (max) {
         return Math.floor(Math.random() * Math.floor(max));
     };
+    Utils.getClosestPointOnRectToCircle = function (rectPos, rectWidth, rectHeight, circlePos) {
+        var closestXpoint;
+        var rectLeftPos = rectPos.x;
+        var rectRightPos = rectPos.x + rectWidth;
+        // check if already within x bounds of rect
+        if (circlePos.x > rectLeftPos && circlePos.x < rectRightPos) {
+            closestXpoint = circlePos.x;
+        }
+        else {
+            // If not already within bounds, find closest x value
+            var distanceLeft = Math.abs(rectLeftPos - circlePos.x);
+            var distanceRight = Math.abs(rectRightPos - circlePos.x);
+            closestXpoint = (Math.min(distanceLeft, distanceRight) === distanceLeft) ? rectLeftPos : rectRightPos;
+        }
+        var closestYpoint;
+        var rectTopPos = rectPos.y;
+        var rectBotPos = rectPos.y + rectHeight;
+        if (circlePos.y > rectTopPos && circlePos.y < rectBotPos) {
+            closestYpoint = circlePos.y;
+        }
+        else {
+            var distanceTop = Math.abs(rectTopPos - circlePos.y);
+            var distanceBot = Math.abs(rectBotPos - circlePos.y);
+            closestYpoint = (Math.min(distanceTop, distanceBot) === distanceTop) ? rectTopPos : rectBotPos;
+        }
+        return new Point(closestXpoint, closestYpoint);
+    };
     return Utils;
 }());
 /// <reference path="utils.ts" />
@@ -278,7 +305,7 @@ var CircleMovingEntity = /** @class */ (function (_super) {
 var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
     function Bullet(p, dir) {
-        var _this = _super.call(this, p, "grey", 1, 5, dir, 12) || this;
+        var _this = _super.call(this, p, "grey", 1, 5, dir, 8) || this;
         _this.outOfBounds = false;
         _this.damageMultiplier = 0;
         _this.damage = 100;
@@ -331,37 +358,25 @@ var Bullet = /** @class */ (function (_super) {
         bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
-                for (var i = 0; i < bumper.vertices.length; i++) {
-                    if (i === 3) {
-                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
-                            this.adjustDirectionFromRectCollision(i, bumper);
-                            break bumperLoop;
-                        }
-                    }
-                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
-                        this.adjustDirectionFromRectCollision(i, bumper);
-                        break bumperLoop;
-                    }
-                }
+                // Treat this position as previous (which was outside of collision area)
+                var prevPos = new Point(this.position.x -= this.direction.x * this.moveSpeed, this.position.y -= this.direction.y * this.moveSpeed);
+                // Get collision normal
+                var closestPoint = Utils.getClosestPointOnRectToCircle(bumper.position, bumper.width, bumper.height, prevPos);
+                var colNormal = Utils.getTargetDirectionNormal(closestPoint, prevPos);
+                // Reflect
+                this.direction = Point.Reflect(this.direction, colNormal);
+                // Apply other rebound effects
+                this.applyReboundEffects();
+                // Can't hit more than one bumper at once, break
+                break bumperLoop;
             }
         }
     };
-    Bullet.prototype.adjustDirectionFromRectCollision = function (side, bumper) {
-        if (side === 0 || side === 2) {
-            this.direction.y = -this.direction.y;
-        }
-        else if (side === 1 || side === 3) {
-            this.direction.x = -this.direction.x;
-        }
-        // Move back to avoid futher collisions
-        this.position.x += this.direction.x * this.moveSpeed;
-        this.position.y += this.direction.y * this.moveSpeed;
-        // Apply other rebound effects
-        this.applyReboundEffects();
-    };
     Bullet.prototype.applyReboundEffects = function () {
         this.damageMultiplier += 1;
-        this.radius += this.reboundRadiusGrowthStep;
+        // TODO - move bullet out of colliding rect by penetration distance + new radius (to avoid further collisions)
+        // OR increase radius over time, or after delay, so bullet has rebounded already when it grows
+        //this.radius += this.reboundRadiusGrowthStep;
         this.color = "red";
     };
     Bullet.prototype.checkCollisionWithEnemies = function () {
@@ -392,18 +407,9 @@ var CircleBumper = /** @class */ (function (_super) {
 }(CircleEntity));
 var RectangleBumper = /** @class */ (function (_super) {
     __extends(RectangleBumper, _super);
-    function RectangleBumper(p, col, lw, w, h, stroke) {
-        var _this = _super.call(this, p, col, lw, w, h, stroke) || this;
-        _this.vertices = [];
-        _this.findVertices();
-        return _this;
+    function RectangleBumper() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    RectangleBumper.prototype.findVertices = function () {
-        this.vertices.push(this.position);
-        this.vertices.push(new Point(this.position.x + this.width, this.position.y));
-        this.vertices.push(new Point(this.position.x + this.width, this.position.y + this.height));
-        this.vertices.push(new Point(this.position.x, this.position.y + this.height));
-    };
     return RectangleBumper;
 }(RectangleEntity));
 /// <reference path="entities.ts" />
@@ -466,47 +472,19 @@ var Enemy = /** @class */ (function (_super) {
         bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
-                for (var i = 0; i < bumper.vertices.length; i++) {
-                    if (i === 3) {
-                        if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
-                            this.adjustDirectionFromRectCollision(i);
-                            //break bumperLoop;
-                        }
-                    }
-                    else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
-                        this.adjustDirectionFromRectCollision(i);
-                        //break bumperLoop;
-                    }
-                }
+                // Treat this position as previous (which was outside of collision area)
+                // Avoids normalising two potentially identical points for nan result
+                var prevPos = new Point(this.position.x -= this.direction.x * this.moveSpeed, this.position.y -= this.direction.y * this.moveSpeed);
+                // Get collision normal
+                var closestPoint = Utils.getClosestPointOnRectToCircle(bumper.position, bumper.width, bumper.height, prevPos);
+                var colNormal = Utils.getTargetDirectionNormal(closestPoint, prevPos);
+                // Reflect
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 20;
+                // Can't collide with more than 1 bumper
+                break bumperLoop;
             }
         }
-    };
-    Enemy.prototype.checkCollisionsWithEnemies = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
-            var enemy = _a[_i];
-            if (enemy != this) {
-                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
-                    // Give impulse similar to bullet bounce
-                    var colNormal = Utils.getTargetDirectionNormal(enemy.position, this.position);
-                    this.direction = Point.Reflect(this.direction, colNormal);
-                    this.directionCooldown = 20;
-                    break;
-                }
-            }
-        }
-    };
-    Enemy.prototype.adjustDirectionFromRectCollision = function (side) {
-        if (side === 0 || side === 2) {
-            this.direction.y = -this.direction.y;
-        }
-        else if (side === 1 || side === 3) {
-            this.direction.x = -this.direction.x;
-        }
-        // Move back from rect to avoid further collisions
-        this.position.x += this.direction.x * this.moveSpeed;
-        this.position.y += this.direction.y * this.moveSpeed;
-        // Impulse
-        this.directionCooldown = 20;
     };
     Enemy.prototype.takeDamage = function (damage) {
         this.health -= damage;
