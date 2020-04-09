@@ -96,6 +96,4 @@ class CanvasUtils {
         }
         return false;
     }
-
-    
 }

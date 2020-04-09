@@ -10,8 +10,7 @@ class EntityManager {
     private circleBumpers: CircleBumper[];
     private rectBumpers: RectangleBumper[];
     private enemies: Enemy[];
-    private maxEnemyCount: number = 10;
-    private spawnPoints: Point[];
+
 
     public static getInstance(): EntityManager {
         if (!this.instance) {
@@ -41,22 +40,31 @@ class EntityManager {
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
-        this.spawnPoints = [];
         this.setupBumpers();
         this.setupEnemies();
     }
 
     private setupBumpers(): void {
+        let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
+        let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
+
+        // Rectangle Bumpers
+        let rectWidth: number = canvasWidth * 0.6;
+        let rectHeight: number = canvasHeight * 0.1;
         let lineWidth: number = 1;
-        this.circleBumpers.push(new CircleBumper(new Point(460, 320), "orange", lineWidth, 60));
+        this.rectBumpers.push(new RectangleBumper(new Point(
+            canvasWidth * 0.2, canvasHeight * 0.35 
+        ), "black", lineWidth, rectWidth, rectHeight, "black"));
+        
+        // Circle Bumpers
+        let circleBumperRadius: number = 40;
+        this.circleBumpers.push(new CircleBumper(new Point(
+            canvasWidth * 0.1, canvasHeight * 0.2
+        ), "orange", lineWidth, circleBumperRadius));
 
-        let rectWidth: number = 300;
-        let rectHeight: number = 80;
-        this.rectBumpers.push(new RectangleBumper(new Point(600, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(40, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
-
-        this.rectBumpers.push(new RectangleBumper(new Point(420, -100), "blue", lineWidth, rectHeight, rectWidth, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(420, 460), "blue", lineWidth, rectHeight, rectWidth, "black"));
+        this.circleBumpers.push(new CircleBumper(new Point(
+            canvasWidth * 0.9, canvasHeight * 0.2
+        ), "orange", lineWidth, circleBumperRadius));
     }
 
     private setupEnemies(): void {
@@ -64,11 +72,6 @@ class EntityManager {
 
         let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
         let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
-        this.spawnPoints.push(new Point(-50, -50));
-        this.spawnPoints.push(new Point(canvasWidth + 50, -50));
-        this.spawnPoints.push(new Point(canvasWidth, canvasHeight + 50));
-        this.spawnPoints.push(new Point(-50, canvasHeight));
-        this.spawnPoints.push(new Point(canvasWidth / 2, canvasHeight + 50));
     }
 
     public updateEntities(): void {
@@ -87,16 +90,6 @@ class EntityManager {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
             }
-        }
-    }
-
-    private spawnEnemies(): void {
-        if (this.enemies.length < this.maxEnemyCount) {
-            // Get random spawn point
-            this.enemies.push(new Enemy(this.spawnPoints[Utils.getRandomNumber(this.spawnPoints.length)], "black", 1, 15, new Point(), 3));
-        }
-        else {
-            console.log("max enemies");
         }
     }
 

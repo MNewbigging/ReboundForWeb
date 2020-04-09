@@ -17,7 +17,6 @@ class Enemy extends CircleMovingEntity {
             this.checkCollisionsWithBumpers();
 
             // Check for other enemies
-            //this.checkCollisionsWithEnemies();
             
             // Set direction to face player if no impulse
             if (this.directionCooldown <= 0) {

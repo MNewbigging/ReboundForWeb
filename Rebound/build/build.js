@@ -432,7 +432,6 @@ var Enemy = /** @class */ (function (_super) {
             // Check for bumpers
             this.checkCollisionsWithBumpers();
             // Check for other enemies
-            //this.checkCollisionsWithEnemies();
             // Set direction to face player if no impulse
             if (this.directionCooldown <= 0) {
                 var playerToEnemy = Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position);
@@ -597,12 +596,10 @@ var Player = /** @class */ (function (_super) {
 /// <reference path="canvasUtils.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
-        this.maxEnemyCount = 10;
         this.player = new Player();
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
-        this.spawnPoints = [];
         this.setupBumpers();
         this.setupEnemies();
     }
@@ -625,24 +622,22 @@ var EntityManager = /** @class */ (function () {
         return this.enemies;
     };
     EntityManager.prototype.setupBumpers = function () {
+        var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
+        var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
+        // Rectangle Bumpers
+        var rectWidth = canvasWidth * 0.6;
+        var rectHeight = canvasHeight * 0.1;
         var lineWidth = 1;
-        this.circleBumpers.push(new CircleBumper(new Point(460, 320), "orange", lineWidth, 60));
-        var rectWidth = 300;
-        var rectHeight = 80;
-        this.rectBumpers.push(new RectangleBumper(new Point(600, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(40, 280), "blue", lineWidth, rectWidth, rectHeight, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(420, -100), "blue", lineWidth, rectHeight, rectWidth, "black"));
-        this.rectBumpers.push(new RectangleBumper(new Point(420, 460), "blue", lineWidth, rectHeight, rectWidth, "black"));
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.2, canvasHeight * 0.35), "black", lineWidth, rectWidth, rectHeight, "black"));
+        // Circle Bumpers
+        var circleBumperRadius = 40;
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.1, canvasHeight * 0.2), "orange", lineWidth, circleBumperRadius));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.9, canvasHeight * 0.2), "orange", lineWidth, circleBumperRadius));
     };
     EntityManager.prototype.setupEnemies = function () {
         this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        this.spawnPoints.push(new Point(-50, -50));
-        this.spawnPoints.push(new Point(canvasWidth + 50, -50));
-        this.spawnPoints.push(new Point(canvasWidth, canvasHeight + 50));
-        this.spawnPoints.push(new Point(-50, canvasHeight));
-        this.spawnPoints.push(new Point(canvasWidth / 2, canvasHeight + 50));
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -658,15 +653,6 @@ var EntityManager = /** @class */ (function () {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
             }
-        }
-    };
-    EntityManager.prototype.spawnEnemies = function () {
-        if (this.enemies.length < this.maxEnemyCount) {
-            // Get random spawn point
-            this.enemies.push(new Enemy(this.spawnPoints[Utils.getRandomNumber(this.spawnPoints.length)], "black", 1, 15, new Point(), 3));
-        }
-        else {
-            console.log("max enemies");
         }
     };
     EntityManager.prototype.renderEntities = function () {

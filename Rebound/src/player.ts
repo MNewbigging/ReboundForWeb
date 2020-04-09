@@ -109,7 +109,4 @@ class Player extends CircleMovingEntity {
             }
         } 
     }
-
-
-
 }

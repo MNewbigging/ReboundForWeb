@@ -105,8 +105,4 @@ class Bullet extends CircleMovingEntity {
             }
         }
     }
-
-
-
-
 }
