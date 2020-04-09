@@ -79,7 +79,7 @@ class EntityManager {
         }
 
         this.removeDeadEnemies();
-        this.spawnEnemies();
+        //this.spawnEnemies();
     }
 
     private removeDeadEnemies(): void {

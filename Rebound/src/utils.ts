@@ -107,29 +107,19 @@ class Utils {
     }
 
     public static isCircleInsideRectArea(rectPos: Point, rectWidth: number, rectHeight: number, circlePos: Point, circleRadius: number): boolean {
-        let circleInside: boolean = false;
-        let xIntersect: boolean = false;
-        let yIntersect: boolean = false;
-        // Get distance vector between rect pos (top left origin) and circle pos
-        let distance: Point = Point.Subtract(rectPos, circlePos);
-        
-        if (distance.x > 0 && distance.x < circleRadius) {
-            xIntersect = true;
-        }
-        else if (distance.x <= 0 && Math.abs(distance.x) < rectWidth + circleRadius) {
-            xIntersect = true;
-        }
-        if(distance.y > 0 && distance.y < circleRadius) {
-            yIntersect = true;
-        }
-        else if (distance.y <= 0 && Math.abs(distance.y) < rectHeight + circleRadius) {
-            yIntersect = true;
-        }
-        if (xIntersect && yIntersect) {
-            circleInside = true;
-        }
+        // Get absolute distance between rect and circle
+        let dx = Math.abs(circlePos.x - (rectPos.x + rectWidth * 0.5));
+        let dy = Math.abs(circlePos.y - (rectPos.y + rectHeight * 0.5));
 
-        return circleInside;
+        if (dx > circleRadius + rectWidth * 0.5) { return false }
+        if (dy > circleRadius + rectHeight * 0.5) { return false }
+
+        if (dx <= rectWidth) { return true }
+        if (dy <= rectHeight) { return true }
+
+        dx -= rectWidth;
+        dy -= rectHeight;
+        return (dx*dx + dy*dy <= circleRadius*circleRadius);
     }
 
     public static getRandomNumber(max: number): number {

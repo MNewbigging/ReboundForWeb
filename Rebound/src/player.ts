@@ -6,7 +6,6 @@
 
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
-    public lastDir: Point = new Point(0, -1);
     private maxBullets: number = 30;
     private timeBetweenShots: number = 0;
     private maxTimeBetweenShots: number = 30;
@@ -49,7 +48,7 @@ class Player extends CircleMovingEntity {
                     new Point(this.position.x, this.position.y), 
                     Utils.getTargetDirectionNormal(this.canvasUtils.getMousePos(), this.position)
                 ));
-                // Reset bullet timer
+                // Reset bullet cooldown timer
                 this.timeBetweenShots = this.maxTimeBetweenShots;
             }
         }
@@ -64,26 +63,12 @@ class Player extends CircleMovingEntity {
         // Tick down time between shots
         this.timeBetweenShots -= 1;
 
-        // If there is a direction to save
-        if (this.direction.x != 0 || this.direction.y != 0) {
-            // Save current direction for bullets next frame
-            this.lastDir.x = this.direction.x;
-            this.lastDir.y = this.direction.y;
-        }
-
         // Clear current dir to stop player moving into next frame
         this.direction.x = 0;
         this.direction.y = 0;
 
-        // Remove any dead bullets (outside of canvas) and update the rest
-        for(let i: number = 0; i < this.bullets.length; i++) {
-            if (!this.bullets[i].alive) {
-                this.bullets.splice(i, 1);
-            }
-            else {
-                this.bullets[i].update();
-            }
-        }       
+        // Clear or update dead/live bullets
+        this.manageBullets();
     }
 
     private playerWillCollideWithBumper(): boolean {
@@ -94,14 +79,15 @@ class Player extends CircleMovingEntity {
         nextPos.x += (this.direction.x * speed);
         nextPos.y += (this.direction.y * speed);
 
-        // Use the next frame pos to check for collisions
+        // Use the next frame pos to check for collisions with circle bumpers
         for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
                 playerWillCollide = true;
                 break;
             }
         }
-
+        
+        // Do the same collision checks against rectangle bumpers
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
                 playerWillCollide = true;
@@ -110,6 +96,18 @@ class Player extends CircleMovingEntity {
         }
 
         return playerWillCollide;
+    }
+
+    private manageBullets(): void {
+        // Remove any dead bullets (outside of canvas) and update the rest
+        for(let i: number = 0; i < this.bullets.length; i++) {
+            if (this.bullets[i].outOfBounds) {
+                this.bullets.splice(i, 1);
+            }
+            else {
+                this.bullets[i].update();
+            }
+        } 
     }
 
 

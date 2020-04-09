@@ -15,9 +15,11 @@ class Enemy extends CircleMovingEntity {
 
             // Check for bumpers
             this.checkCollisionsWithBumpers();
+
+            // Check for other enemies
+            //this.checkCollisionsWithEnemies();
             
-            
-            // Move towards player if allowed
+            // Set direction to face player if no impulse
             if (this.directionCooldown <= 0) {
                 let playerToEnemy: Point = Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position);
                 this.direction = Point.Normalize(playerToEnemy);
@@ -58,25 +60,37 @@ class Enemy extends CircleMovingEntity {
     }
 
     private checkCollisionsWithRectBumpers(): void {
+        bumperLoop:
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 for (let i: number = 0; i < bumper.vertices.length; i++) {
                     if(i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
                             this.adjustDirectionFromRectCollision(i);
-                            break;
+                            //break bumperLoop;
                         }
                     }
                     else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i+1], this.position, this.radius)) {
                         this.adjustDirectionFromRectCollision(i);
-                        break;
+                        //break bumperLoop;
                     }
                 }
-                this.directionCooldown = 20;
-                break;
             }
-            
         }
+    }
+
+    private checkCollisionsWithEnemies(): void {
+        for (let enemy of EntityManager.getInstance().getEnemies()) {
+            if (enemy != this) {
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {  
+                    // Give impulse similar to bullet bounce
+                    let colNormal: Point = Utils.getTargetDirectionNormal(enemy.position, this.position);
+                    this.direction = Point.Reflect(this.direction, colNormal);
+                    this.directionCooldown = 20;
+                    break;
+                }
+            }
+        } 
     }
 
     private adjustDirectionFromRectCollision(side: number): void {
@@ -86,9 +100,12 @@ class Enemy extends CircleMovingEntity {
         else if (side === 1 || side === 3) {
             this.direction.x = -this.direction.x;
         }
-        // Move back to avoid futher collisions
+        // Move back from rect to avoid further collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+
+        // Impulse
+        this.directionCooldown = 20;
     }
 
     public takeDamage(damage: number): void {

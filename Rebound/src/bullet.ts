@@ -1,10 +1,10 @@
 /// <reference path="entities.ts" />
 
 class Bullet extends CircleMovingEntity {
-    public alive: boolean = true; // TODO rename to outOfBounds or similar
+    public outOfBounds: boolean = false; 
     public damageMultiplier: number = 0;
     public damage: number = 100;
-    private reboundRadiusGrowthStep: number = 2;
+    private reboundRadiusGrowthStep: number = 1;
     
 
     constructor(p: Point, dir: Point) {
@@ -20,16 +20,16 @@ class Bullet extends CircleMovingEntity {
     
     private checkIfOutOfBounds(): void {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
     }
 
@@ -58,33 +58,26 @@ class Bullet extends CircleMovingEntity {
     }
 
     private checkCollisionsWithRectBumpers(): void {
+        bumperLoop:
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
-            // Basic distance check before continuing with collision detection
-            // Center point of rect bumper
-            let rectCenter: Point  = new Point(
-                bumper.position.x + bumper.width / 2,
-                bumper.position.y + bumper.height / 2
-            );
-            let distance: Point = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 for (let i: number = 0; i < bumper.vertices.length; i++) {
                     if(i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
-                            this.adjustDirectionFromRectCollision(i);
-                            break;
+                            this.adjustDirectionFromRectCollision(i, bumper);
+                            break bumperLoop;
                         }
                     }
                     else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i+1], this.position, this.radius)) {
-                        this.adjustDirectionFromRectCollision(i);
-                        break;
+                        this.adjustDirectionFromRectCollision(i, bumper);
+                        break bumperLoop;
                     }
                 }
-            break;
             }
         }
     }
 
-    private adjustDirectionFromRectCollision(side: number): void {
+    private adjustDirectionFromRectCollision(side: number, bumper: RectangleBumper): void {
         if (side === 0 || side === 2) {
             this.direction.y = -this.direction.y;
         }
@@ -94,6 +87,8 @@ class Bullet extends CircleMovingEntity {
         // Move back to avoid futher collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+
+
 
         // Apply other rebound effects
         this.applyReboundEffects();
@@ -112,6 +107,8 @@ class Bullet extends CircleMovingEntity {
                 if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
                     // Damage the enemy
                     enemy.takeDamage(this.damage * this.damageMultiplier);
+                    // Remove this bullet
+                    this.outOfBounds = true;
                     break;
                 }
             }

@@ -103,27 +103,24 @@ var Utils = /** @class */ (function () {
         return false;
     };
     Utils.isCircleInsideRectArea = function (rectPos, rectWidth, rectHeight, circlePos, circleRadius) {
-        var circleInside = false;
-        var xIntersect = false;
-        var yIntersect = false;
-        // Get distance vector between rect pos (top left origin) and circle pos
-        var distance = Point.Subtract(rectPos, circlePos);
-        if (distance.x > 0 && distance.x < circleRadius) {
-            xIntersect = true;
+        // Get absolute distance between rect and circle
+        var dx = Math.abs(circlePos.x - (rectPos.x + rectWidth * 0.5));
+        var dy = Math.abs(circlePos.y - (rectPos.y + rectHeight * 0.5));
+        if (dx > circleRadius + rectWidth * 0.5) {
+            return false;
         }
-        else if (distance.x <= 0 && Math.abs(distance.x) < rectWidth + circleRadius) {
-            xIntersect = true;
+        if (dy > circleRadius + rectHeight * 0.5) {
+            return false;
         }
-        if (distance.y > 0 && distance.y < circleRadius) {
-            yIntersect = true;
+        if (dx <= rectWidth) {
+            return true;
         }
-        else if (distance.y <= 0 && Math.abs(distance.y) < rectHeight + circleRadius) {
-            yIntersect = true;
+        if (dy <= rectHeight) {
+            return true;
         }
-        if (xIntersect && yIntersect) {
-            circleInside = true;
-        }
-        return circleInside;
+        dx -= rectWidth;
+        dy -= rectHeight;
+        return (dx * dx + dy * dy <= circleRadius * circleRadius);
     };
     Utils.getRandomNumber = function (max) {
         return Math.floor(Math.random() * Math.floor(max));
@@ -282,10 +279,10 @@ var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
     function Bullet(p, dir) {
         var _this = _super.call(this, p, "grey", 1, 5, dir, 12) || this;
-        _this.alive = true; // TODO rename to outOfBounds or similar
+        _this.outOfBounds = false;
         _this.damageMultiplier = 0;
         _this.damage = 100;
-        _this.reboundRadiusGrowthStep = 2;
+        _this.reboundRadiusGrowthStep = 1;
         return _this;
     }
     Bullet.prototype.update = function () {
@@ -295,16 +292,16 @@ var Bullet = /** @class */ (function (_super) {
     };
     Bullet.prototype.checkIfOutOfBounds = function () {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
-            this.alive = false;
+            this.outOfBounds = true;
         }
     };
     Bullet.prototype.checkCollisions = function () {
@@ -331,30 +328,25 @@ var Bullet = /** @class */ (function (_super) {
         }
     };
     Bullet.prototype.checkCollisionsWithRectBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
-            // Basic distance check before continuing with collision detection
-            // Center point of rect bumper
-            var rectCenter = new Point(bumper.position.x + bumper.width / 2, bumper.position.y + bumper.height / 2);
-            var distance = Point.Subtract(rectCenter, this.position);
-            if (Point.LengthSq(distance) < 0.3 * Point.LengthSq(new Point(bumper.width, bumper.height))) {
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 for (var i = 0; i < bumper.vertices.length; i++) {
                     if (i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
-                            this.adjustDirectionFromRectCollision(i);
-                            break;
+                            this.adjustDirectionFromRectCollision(i, bumper);
+                            break bumperLoop;
                         }
                     }
                     else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
-                        this.adjustDirectionFromRectCollision(i);
-                        break;
+                        this.adjustDirectionFromRectCollision(i, bumper);
+                        break bumperLoop;
                     }
                 }
-                break;
             }
         }
     };
-    Bullet.prototype.adjustDirectionFromRectCollision = function (side) {
+    Bullet.prototype.adjustDirectionFromRectCollision = function (side, bumper) {
         if (side === 0 || side === 2) {
             this.direction.y = -this.direction.y;
         }
@@ -380,6 +372,8 @@ var Bullet = /** @class */ (function (_super) {
                 if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
                     // Damage the enemy
                     enemy.takeDamage(this.damage * this.damageMultiplier);
+                    // Remove this bullet
+                    this.outOfBounds = true;
                     break;
                 }
             }
@@ -431,7 +425,9 @@ var Enemy = /** @class */ (function (_super) {
             this.directionCooldown -= 1;
             // Check for bumpers
             this.checkCollisionsWithBumpers();
-            // Move towards player if allowed
+            // Check for other enemies
+            //this.checkCollisionsWithEnemies();
+            // Set direction to face player if no impulse
             if (this.directionCooldown <= 0) {
                 var playerToEnemy = Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position);
                 this.direction = Point.Normalize(playerToEnemy);
@@ -467,23 +463,35 @@ var Enemy = /** @class */ (function (_super) {
         }
     };
     Enemy.prototype.checkCollisionsWithRectBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 for (var i = 0; i < bumper.vertices.length; i++) {
                     if (i === 3) {
                         if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[0], this.position, this.radius)) {
                             this.adjustDirectionFromRectCollision(i);
-                            break;
+                            //break bumperLoop;
                         }
                     }
                     else if (Utils.CircleToLineIntersect(bumper.vertices[i], bumper.vertices[i + 1], this.position, this.radius)) {
                         this.adjustDirectionFromRectCollision(i);
-                        break;
+                        //break bumperLoop;
                     }
                 }
-                this.directionCooldown = 20;
-                break;
+            }
+        }
+    };
+    Enemy.prototype.checkCollisionsWithEnemies = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            if (enemy != this) {
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
+                    // Give impulse similar to bullet bounce
+                    var colNormal = Utils.getTargetDirectionNormal(enemy.position, this.position);
+                    this.direction = Point.Reflect(this.direction, colNormal);
+                    this.directionCooldown = 20;
+                    break;
+                }
             }
         }
     };
@@ -494,9 +502,11 @@ var Enemy = /** @class */ (function (_super) {
         else if (side === 1 || side === 3) {
             this.direction.x = -this.direction.x;
         }
-        // Move back to avoid futher collisions
+        // Move back from rect to avoid further collisions
         this.position.x += this.direction.x * this.moveSpeed;
         this.position.y += this.direction.y * this.moveSpeed;
+        // Impulse
+        this.directionCooldown = 20;
     };
     Enemy.prototype.takeDamage = function (damage) {
         this.health -= damage;
@@ -515,7 +525,6 @@ var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 5) || this;
-        _this.lastDir = new Point(0, -1);
         _this.maxBullets = 30;
         _this.timeBetweenShots = 0;
         _this.maxTimeBetweenShots = 30;
@@ -545,7 +554,7 @@ var Player = /** @class */ (function (_super) {
                 // and make sure time between shots has run out
                 if (_this.timeBetweenShots <= 0) {
                     _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), Utils.getTargetDirectionNormal(_this.canvasUtils.getMousePos(), _this.position)));
-                    // Reset bullet timer
+                    // Reset bullet cooldown timer
                     _this.timeBetweenShots = _this.maxTimeBetweenShots;
                 }
             }
@@ -560,24 +569,11 @@ var Player = /** @class */ (function (_super) {
         }
         // Tick down time between shots
         this.timeBetweenShots -= 1;
-        // If there is a direction to save
-        if (this.direction.x != 0 || this.direction.y != 0) {
-            // Save current direction for bullets next frame
-            this.lastDir.x = this.direction.x;
-            this.lastDir.y = this.direction.y;
-        }
         // Clear current dir to stop player moving into next frame
         this.direction.x = 0;
         this.direction.y = 0;
-        // Remove any dead bullets (outside of canvas) and update the rest
-        for (var i = 0; i < this.bullets.length; i++) {
-            if (!this.bullets[i].alive) {
-                this.bullets.splice(i, 1);
-            }
-            else {
-                this.bullets[i].update();
-            }
-        }
+        // Clear or update dead/live bullets
+        this.manageBullets();
     };
     Player.prototype.playerWillCollideWithBumper = function () {
         var playerWillCollide = false;
@@ -586,7 +582,7 @@ var Player = /** @class */ (function (_super) {
         var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         nextPos.x += (this.direction.x * speed);
         nextPos.y += (this.direction.y * speed);
-        // Use the next frame pos to check for collisions
+        // Use the next frame pos to check for collisions with circle bumpers
         for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
@@ -594,6 +590,7 @@ var Player = /** @class */ (function (_super) {
                 break;
             }
         }
+        // Do the same collision checks against rectangle bumpers
         for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
             var bumper = _c[_b];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
@@ -602,6 +599,17 @@ var Player = /** @class */ (function (_super) {
             }
         }
         return playerWillCollide;
+    };
+    Player.prototype.manageBullets = function () {
+        // Remove any dead bullets (outside of canvas) and update the rest
+        for (var i = 0; i < this.bullets.length; i++) {
+            if (this.bullets[i].outOfBounds) {
+                this.bullets.splice(i, 1);
+            }
+            else {
+                this.bullets[i].update();
+            }
+        }
     };
     return Player;
 }(CircleMovingEntity));
@@ -665,7 +673,7 @@ var EntityManager = /** @class */ (function () {
             enemy.update();
         }
         this.removeDeadEnemies();
-        this.spawnEnemies();
+        //this.spawnEnemies();
     };
     EntityManager.prototype.removeDeadEnemies = function () {
         for (var i = 0; i < this.enemies.length; i++) {
