@@ -20,6 +20,7 @@ class Enemy extends CircleMovingEntity {
 
             // Check for other enemies
             
+
             // Set direction
             this.setFacingDirection();
 
@@ -28,7 +29,7 @@ class Enemy extends CircleMovingEntity {
         }
         // Player has been hit
         else {
-            // Damage player
+            // Damage player - repawn endlessly after delay (in meantime enemies head towads target zones)
             
         }
     }
@@ -82,6 +83,14 @@ class Enemy extends CircleMovingEntity {
         }
     }
 
+    private checkTargetZoneReached(distance: number): void {
+        let bounds: number = 2;
+        if (distance < bounds) {
+            // reached target zone
+            this.alive = false;
+        }
+    }
+
     private setFacingDirection(): void {
         // Set direction if no impulse is currently active
         if (this.directionCooldown <= 0) {
@@ -93,6 +102,9 @@ class Enemy extends CircleMovingEntity {
         // Compare distance to this enemy's target zone and the distance to player
         let distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
         let distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position,this.position));
+
+        // While we have disatnce calculated here, check if reached target zone already
+        this.checkTargetZoneReached(distanceTotz);
 
         if (distanceToPlayer < distanceTotz) {
             // Head for player

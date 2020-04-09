@@ -441,7 +441,7 @@ var Enemy = /** @class */ (function (_super) {
         }
         // Player has been hit
         else {
-            // Damage player
+            // Damage player - repawn endlessly after delay (in meantime enemies head towads target zones)
         }
     };
     Enemy.prototype.enemyHasCollidedWithPlayer = function () {
@@ -484,6 +484,13 @@ var Enemy = /** @class */ (function (_super) {
             }
         }
     };
+    Enemy.prototype.checkTargetZoneReached = function (distance) {
+        var bounds = 2;
+        if (distance < bounds) {
+            // reached target zone
+            this.alive = false;
+        }
+    };
     Enemy.prototype.setFacingDirection = function () {
         // Set direction if no impulse is currently active
         if (this.directionCooldown <= 0) {
@@ -494,6 +501,8 @@ var Enemy = /** @class */ (function (_super) {
         // Compare distance to this enemy's target zone and the distance to player
         var distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
         var distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position));
+        // While we have disatnce calculated here, check if reached target zone already
+        this.checkTargetZoneReached(distanceTotz);
         if (distanceToPlayer < distanceTotz) {
             // Head for player
             return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
@@ -681,7 +690,7 @@ var EntityManager = /** @class */ (function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
         this.enemyTargetZones.push(new EnemyTargetZone(new Point(canvasWidth * 0.5, canvasHeight * 0.8), "purple", 1, 30));
-        this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
+        this.enemies.push(new Enemy(new Point(canvasWidth * 0.5, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -690,7 +699,6 @@ var EntityManager = /** @class */ (function () {
             enemy.update();
         }
         this.removeDeadEnemies();
-        //this.spawnEnemies();
     };
     EntityManager.prototype.removeDeadEnemies = function () {
         for (var i = 0; i < this.enemies.length; i++) {

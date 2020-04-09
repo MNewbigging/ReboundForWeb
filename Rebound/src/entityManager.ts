@@ -82,9 +82,9 @@ class EntityManager {
             canvasWidth * 0.5, canvasHeight * 0.8
         ), "purple", 1, 30));
 
-        this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
-
-
+        this.enemies.push(new Enemy(new Point(
+            canvasWidth * 0.5, canvasHeight * 0.1
+        ), "black", 1, 15, new Point(), 3));
     }
 
     public updateEntities(): void {
@@ -95,7 +95,6 @@ class EntityManager {
         }
 
         this.removeDeadEnemies();
-        //this.spawnEnemies();
     }
 
     private removeDeadEnemies(): void {
