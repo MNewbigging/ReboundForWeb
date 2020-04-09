@@ -488,6 +488,7 @@ var Enemy = /** @class */ (function (_super) {
         var bounds = 2;
         if (distance < bounds) {
             // reached target zone
+            EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;
         }
     };
@@ -620,10 +621,14 @@ var Player = /** @class */ (function (_super) {
 /// <reference path="entities.ts" />
 var EnemyTargetZone = /** @class */ (function (_super) {
     __extends(EnemyTargetZone, _super);
-    function EnemyTargetZone() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        // Remaining lives
-        _this.remainingLives = 1;
+    function EnemyTargetZone(p, col, lw, r) {
+        var _this = _super.call(this, p, col, lw, r) || this;
+        // Tracks lives
+        _this.maxLives = 2;
+        // Visual cue for lives remaining - the threat circle
+        _this.threatCircleRadius = 0;
+        _this.threatCircleColor = "red";
+        _this.remainingLives = _this.maxLives;
         return _this;
     }
     EnemyTargetZone.prototype.reduceLives = function () {
@@ -631,9 +636,32 @@ var EnemyTargetZone = /** @class */ (function (_super) {
         if (this.remainingLives <= 0) {
             this.gameOver();
         }
+        // Recalculate inner circle radius
+        this.recalculateThreatCircleRadius();
     };
     EnemyTargetZone.prototype.gameOver = function () {
-        console.log("you lost!");
+        this.color = "red";
+    };
+    EnemyTargetZone.prototype.recalculateThreatCircleRadius = function () {
+        // Find inverse percentage of lives remaining vs max lives
+        var percentage = 100 - (100 * this.remainingLives) / this.maxLives;
+        console.log("perc: " + percentage);
+        // That's the percentage of total target zone radius for the threat circle
+        this.threatCircleRadius = this.radius * (percentage / 100);
+    };
+    EnemyTargetZone.prototype.draw = function () {
+        _super.prototype.draw.call(this);
+        // Draw threat circle
+        var canvasContext = CanvasUtils.getInstance().getCanvasContext();
+        canvasContext.save();
+        canvasContext.beginPath();
+        canvasContext.arc(this.position.x, this.position.y, this.threatCircleRadius, 0, 2 * Math.PI);
+        canvasContext.strokeStyle = this.threatCircleColor;
+        canvasContext.stroke();
+        canvasContext.fillStyle = this.threatCircleColor;
+        canvasContext.fill();
+        canvasContext.lineWidth = this.lineWidth;
+        canvasContext.restore();
     };
     return EnemyTargetZone;
 }(CircleEntity));
