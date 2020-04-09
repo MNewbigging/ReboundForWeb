@@ -2,6 +2,7 @@
 /// <reference path="bumpers.ts" />
 /// <reference path="enemies.ts" />
 /// <reference path="canvasUtils.ts" />
+/// <reference path="targetZones.ts" />
 
 
 class EntityManager {
@@ -10,6 +11,7 @@ class EntityManager {
     private circleBumpers: CircleBumper[];
     private rectBumpers: RectangleBumper[];
     private enemies: Enemy[];
+    private enemyTargetZones: EnemyTargetZone[];
 
 
     public static getInstance(): EntityManager {
@@ -35,11 +37,16 @@ class EntityManager {
         return this.enemies;
     }
 
+    public getEnemyTargetZones(): EnemyTargetZone[] {
+        return this.enemyTargetZones;
+    }
+
     private constructor() {
         this.player = new Player();
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
+        this.enemyTargetZones = [];
         this.setupBumpers();
         this.setupEnemies();
     }
@@ -68,10 +75,16 @@ class EntityManager {
     }
 
     private setupEnemies(): void {
-        this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
-
         let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
         let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
+
+        this.enemyTargetZones.push(new EnemyTargetZone(new Point(
+            canvasWidth * 0.5, canvasHeight * 0.8
+        ), "purple", 1, 30));
+
+        this.enemies.push(new Enemy(new Point(50, 50), "black", 1, 15, new Point(), 3));
+
+
     }
 
     public updateEntities(): void {
@@ -109,6 +122,11 @@ class EntityManager {
         for (let bumper of this.rectBumpers) {
             bumper.draw();
         }
+        // Enemy target zones
+        for (let tz of this.enemyTargetZones) {
+            tz.draw();
+        }
+
         // Enemies
         if (this.enemies.length > 0) {
             for (let enemy of this.enemies) {

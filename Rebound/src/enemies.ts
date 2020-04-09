@@ -6,6 +6,8 @@ class Enemy extends CircleMovingEntity {
     private health: number = 100;
     // Denies changing direction in update (allows for simple impulses)
     private directionCooldown: number = 0;
+    // Default targeted zone for this enemy; random index within tz list
+    private targetZoneIndex: number = 0;
 
     update(): void {
         // Only continue if haven't hit player
@@ -18,11 +20,8 @@ class Enemy extends CircleMovingEntity {
 
             // Check for other enemies
             
-            // Set direction to face player if no impulse
-            if (this.directionCooldown <= 0) {
-                let playerToEnemy: Point = Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position);
-                this.direction = Point.Normalize(playerToEnemy);
-            }
+            // Set direction
+            this.setFacingDirection();
 
             // Move
             super.update();
@@ -80,6 +79,28 @@ class Enemy extends CircleMovingEntity {
                 // Can't collide with more than 1 bumper
                 break bumperLoop;
             }
+        }
+    }
+
+    private setFacingDirection(): void {
+        // Set direction if no impulse is currently active
+        if (this.directionCooldown <= 0) {
+            this.direction = this.getPriorityTargetDirectionNormal();
+        }
+    }
+
+    private getPriorityTargetDirectionNormal(): Point {
+        // Compare distance to this enemy's target zone and the distance to player
+        let distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
+        let distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position,this.position));
+
+        if (distanceToPlayer < distanceTotz) {
+            // Head for player
+            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
+        }
+        else {
+            // Head for target zone
+            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
         }
     }
 

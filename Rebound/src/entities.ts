@@ -108,6 +108,5 @@ class CircleMovingEntity extends CircleEntity implements IMovingEntity {
         let speed: number = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         this.position.x += (this.direction.x * speed);
         this.position.y += (this.direction.y * speed);
-    }
-    
+    }  
 }
