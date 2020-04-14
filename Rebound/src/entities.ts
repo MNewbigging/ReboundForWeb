@@ -49,7 +49,7 @@ class RectangleEntity implements IEntity, IRectangleEntity {
 
     draw(): void {
         let canvasContext = this.canvasUtils.getCanvasContext();
-        canvasContext.save();
+        canvasContext.save();   
         canvasContext.beginPath();
         canvasContext.lineWidth = this.lineWidth;
         canvasContext.strokeStyle = this.strokeStyle;

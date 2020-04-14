@@ -160,4 +160,8 @@ class Utils {
         
         return new Point(closestXpoint, closestYpoint);
     }
+
+    public static getRadiansFromDegrees(degree: number): number {
+        return degree * Math.PI / 180;
+    }
 }
