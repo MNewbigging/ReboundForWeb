@@ -44,20 +44,23 @@ class GameState {
 
     // Main game logic loop
     public gameLoop = (): void => {
-        // Clear the canvas
-        this.canvasUtils.clearCanvas();
+        if (!EntityManager.getInstance().isGameOver()){
+            // Clear the canvas
+            this.canvasUtils.clearCanvas();
 
-        // Player input 
-        this.keyInput.inputLoop();
+            // Player input 
+            this.keyInput.inputLoop();
 
-        // Update
-        this.updateAll();
+            // Update
+            this.updateAll();
 
-        // Render
-        this.renderAll();
- 
-        // Repeat this function to loop
-        requestAnimationFrame(this.gameLoop);
+            // Render
+            this.renderAll();
+    
+            // Repeat this function to loop
+            requestAnimationFrame(this.gameLoop);
+        }
+
     }
 }
 

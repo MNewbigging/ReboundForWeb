@@ -10,8 +10,8 @@ class Player extends CircleMovingEntity {
     private timeBetweenShots: number = 0;
     private maxTimeBetweenShots: number = 30;
 
-    constructor() {
-        super(new Point(20, 20), "green", 2, 10, new Point(), 5);     
+    constructor(pos: Point) {
+        super(pos, "green", 2, 10, new Point(), 5);     
         this.bullets = [];
     }
 

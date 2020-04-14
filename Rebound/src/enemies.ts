@@ -107,7 +107,7 @@ class Enemy extends CircleMovingEntity {
 
     private checkTargetZoneReached(distance: number): void {
         let bounds: number = 2;
-        if (distance < bounds) {
+        if (this.alive && distance < bounds) {
             // reached target zone
             EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;

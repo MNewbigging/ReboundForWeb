@@ -19,9 +19,11 @@ class EnemyTargetZone extends CircleEntity {
     
     public reduceLives(): void {
         this.remainingLives -= 1;
+
         if (this.remainingLives <= 0) {
             this.targetZoneDestroyed();
         }
+        
         // Recalculate inner circle radius
         this.recalculateThreatCircleRadius();
     }

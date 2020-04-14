@@ -426,8 +426,8 @@ var RectangleBumper = /** @class */ (function (_super) {
 /// <reference path="entityManager.ts" />
 var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
-    function Player() {
-        var _this = _super.call(this, new Point(20, 20), "green", 2, 10, new Point(), 5) || this;
+    function Player(pos) {
+        var _this = _super.call(this, pos, "green", 2, 10, new Point(), 5) || this;
         _this.maxBullets = 30;
         _this.timeBetweenShots = 0;
         _this.maxTimeBetweenShots = 30;
@@ -580,8 +580,9 @@ var EnemySpawnZone = /** @class */ (function (_super) {
 /// <reference path="spawnZones.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
-        this.enemySpawnCooldownMax = 200;
+        this.enemySpawnCooldownMax = 300;
         this.enemySpawnCooldown = 0;
+        this.gameOver = false;
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
@@ -591,8 +592,8 @@ var EntityManager = /** @class */ (function () {
         this.setupBumpers();
         this.setupTargetZones();
         this.setupEnemySpawnZones();
-        //this.setupEnemies();
-        this.player = new Player();
+        var playerPos = new Point(CanvasUtils.getInstance().getCanvas().width * 0.5, CanvasUtils.getInstance().getCanvas().height * 0.5);
+        this.player = new Player(playerPos);
     }
     EntityManager.getInstance = function () {
         if (!this.instance) {
@@ -618,17 +619,26 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.getEnemyTargetZoneIndices = function () {
         return this.enemyTargetZoneIndices;
     };
+    EntityManager.prototype.isGameOver = function () {
+        return this.gameOver;
+    };
     EntityManager.prototype.setupBumpers = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.5);
-        this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.5);
-        // Top bumper
+        this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.4);
+        this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.4);
+        // Top rect bumper
         this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, 0), "black", 1, canvasWidth * 0.5, 30, "black"));
-        // Bot bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, canvasHeight - 30), "black", 1, canvasWidth * 0.5, 30, "black"));
-        // Centre circle bumper
-        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.4), "orange", 1, 40));
+        // Bot rect bumper
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.1, canvasHeight - 30), "black", 1, canvasWidth * 0.8, 30, "black"));
+        // Bot left rect bumper
+        this.rectBumpers.push(new RectangleBumper(new Point(0, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
+        // Bot right rect bumper
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth - 30, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
+        // Centre circle bumper top
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.3), "orange", 1, 40));
+        // Centre circle bumper bot
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.7), "orange", 1, 40));
     };
     // Adds preset bumper layout; circle with 4 squares outside on each axis
     EntityManager.prototype.addBumperSet = function (centerX, centerY) {
@@ -656,22 +666,26 @@ var EntityManager = /** @class */ (function () {
         // Bottom left corner tz
         this.enemyTargetZones.push(new EnemyTargetZone(0, new Point(canvasWidth * 0.2, canvasHeight * 0.8), "purple", 1, 30));
         // Bottom right corner tz
-        this.enemyTargetZones.push(new EnemyTargetZone(0, new Point(canvasWidth * 0.8, canvasHeight * 0.8), "purple", 1, 30));
+        this.enemyTargetZones.push(new EnemyTargetZone(1, new Point(canvasWidth * 0.8, canvasHeight * 0.8), "purple", 1, 30));
         this.enemyTargetZoneIndices.push(0);
         this.enemyTargetZoneIndices.push(1);
     };
     EntityManager.prototype.setupEnemySpawnZones = function () {
-        var spawnZoneA = new Point(470, 100);
+        var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
+        var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
+        var spawnZoneA = new Point(canvasWidth * 0.1, canvasHeight * 0.1);
+        var spawnZoneB = new Point(canvasWidth * 0.9, canvasHeight * 0.1);
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneA, "yellow", 1, 20));
+        this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneB, "yellow", 1, 20));
     };
     EntityManager.prototype.updateEntities = function () {
+        this.removeDeadEnemies();
+        this.spawnEnemies();
         this.player.update();
         for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
             var enemy = _a[_i];
             enemy.update();
         }
-        this.removeDeadEnemies();
-        this.spawnEnemies();
     };
     /*
      *  Current spawning behaviour: all spawn points spawn a new enemy every n frames
@@ -738,11 +752,18 @@ var EntityManager = /** @class */ (function () {
                 this.enemyTargetZoneIndices.splice(i, 1);
             }
         }
-        // Any enemy with the removed zone's id gets a new zone id
-        for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
-            var enemy = _a[_i];
-            if (enemy.targetZoneIndex === zoneIndex) {
-                enemy.setTargetZone();
+        // Check if any target zones remain
+        if (this.enemyTargetZoneIndices.length === 0) {
+            console.log("GAME OVER!");
+            this.gameOver = true;
+        }
+        else {
+            // Any enemy with the removed zone's id gets a new zone id
+            for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
+                var enemy = _a[_i];
+                if (enemy.targetZoneIndex === zoneIndex) {
+                    enemy.setTargetZone();
+                }
             }
         }
     };
@@ -840,7 +861,7 @@ var Enemy = /** @class */ (function (_super) {
     };
     Enemy.prototype.checkTargetZoneReached = function (distance) {
         var bounds = 2;
-        if (distance < bounds) {
+        if (this.alive && distance < bounds) {
             // reached target zone
             EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;
@@ -920,16 +941,18 @@ var GameState = /** @class */ (function () {
         var _this = this;
         // Main game logic loop
         this.gameLoop = function () {
-            // Clear the canvas
-            _this.canvasUtils.clearCanvas();
-            // Player input 
-            _this.keyInput.inputLoop();
-            // Update
-            _this.updateAll();
-            // Render
-            _this.renderAll();
-            // Repeat this function to loop
-            requestAnimationFrame(_this.gameLoop);
+            if (!EntityManager.getInstance().isGameOver()) {
+                // Clear the canvas
+                _this.canvasUtils.clearCanvas();
+                // Player input 
+                _this.keyInput.inputLoop();
+                // Update
+                _this.updateAll();
+                // Render
+                _this.renderAll();
+                // Repeat this function to loop
+                requestAnimationFrame(_this.gameLoop);
+            }
         };
         this.canvasUtils = CanvasUtils.getInstance();
         this.keyInput = new KeyboardInput();
