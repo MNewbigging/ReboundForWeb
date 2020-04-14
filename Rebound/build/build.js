@@ -455,8 +455,8 @@ var Player = /** @class */ (function (_super) {
             }
         };
         _this.fireShot = function () {
-            // Ensure player hasn't reached max bullet count yet
-            if (_this.bullets.length < _this.maxBullets) {
+            // Ensure player is alive and hasn't reached max bullet count yet
+            if (_this.alive && _this.bullets.length < _this.maxBullets) {
                 // and make sure time between shots has run out
                 if (_this.timeBetweenShots <= 0) {
                     _this.bullets.push(new Bullet(new Point(_this.position.x, _this.position.y), Utils.getTargetDirectionNormal(_this.canvasUtils.getMousePos(), _this.position)));
@@ -465,6 +465,7 @@ var Player = /** @class */ (function (_super) {
                 }
             }
         };
+        _this.spawnPoint = new Point(pos.x, pos.y);
         _this.bullets = [];
         return _this;
     }
@@ -472,8 +473,7 @@ var Player = /** @class */ (function (_super) {
         // If dead, tick down respawn cooldown timer
         if (!this.alive) {
             if (this.respawnCooldown <= 0) {
-                this.alive = true;
-                console.log("player is alive");
+                this.respawn();
             }
             else {
                 this.respawnCooldown--;
@@ -530,9 +530,15 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.die = function () {
+        // Die
         this.alive = false;
+        // Reset respawn timer
         this.respawnCooldown = this.respawnCooldownMax;
-        console.log("player is dead");
+        // Change position back to spawn point
+        this.position = new Point(this.spawnPoint.x, this.spawnPoint.y);
+    };
+    Player.prototype.respawn = function () {
+        this.alive = true;
     };
     return Player;
 }(CircleMovingEntity));

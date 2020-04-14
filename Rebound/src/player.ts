@@ -12,9 +12,11 @@ class Player extends CircleMovingEntity {
     public alive: boolean = true;
     private respawnCooldownMax: number = 100;
     private respawnCooldown: number = 0;
+    private spawnPoint: Point;
 
     constructor(pos: Point) {
         super(pos, "green", 2, 10, new Point(), 5);     
+        this.spawnPoint = new Point(pos.x, pos.y);
         this.bullets = [];
     }
 
@@ -43,8 +45,8 @@ class Player extends CircleMovingEntity {
     }
 
     public fireShot = (): void => {
-        // Ensure player hasn't reached max bullet count yet
-        if (this.bullets.length < this.maxBullets) {
+        // Ensure player is alive and hasn't reached max bullet count yet
+        if (this.alive && this.bullets.length < this.maxBullets) {
             // and make sure time between shots has run out
             if (this.timeBetweenShots <= 0) {
                 this.bullets.push(new Bullet(
@@ -61,12 +63,13 @@ class Player extends CircleMovingEntity {
         // If dead, tick down respawn cooldown timer
         if (!this.alive) {
             if (this.respawnCooldown <= 0) {
-                this.alive = true;
-                console.log("player is alive");
-            } else {
+                this.respawn();
+            } 
+            else {
                 this.respawnCooldown--;
             }
-        } else {
+        } 
+        else {
             // Only move the player if it won't collide with an obstacle
             if (!this.playerWillCollideWithBumper()) {
                 super.update();
@@ -79,8 +82,6 @@ class Player extends CircleMovingEntity {
             this.direction.x = 0;
             this.direction.y = 0;
         }
-
-        
 
         // Clear or update dead/live bullets
         this.manageBullets();
@@ -126,8 +127,15 @@ class Player extends CircleMovingEntity {
     }
 
     public die(): void {
+        // Die
         this.alive = false;
+        // Reset respawn timer
         this.respawnCooldown = this.respawnCooldownMax;
-        console.log("player is dead");
+        // Change position back to spawn point
+        this.position = new Point(this.spawnPoint.x, this.spawnPoint.y);
+    }
+
+    private respawn(): void {
+        this.alive = true;
     }
 }
