@@ -519,7 +519,7 @@ var EnemyTargetZone = /** @class */ (function (_super) {
     function EnemyTargetZone(id, p, col, lw, r) {
         var _this = _super.call(this, p, col, lw, r) || this;
         // Tracks lives
-        _this.maxLives = 3;
+        _this.maxLives = 1;
         // Visual cue for lives remaining - the threat circle
         _this.threatCircleRadius = 0;
         _this.threatCircleColor = "red";
@@ -633,10 +633,9 @@ var EntityManager = /** @class */ (function () {
         var enemyCount = 5;
         var intervalX = canvasWidth / enemyCount;
         for (var i = 0; i < enemyCount; i++) {
-            this.enemies.push(new Enemy(new Point(50 + i * intervalX, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
+            this.enemies.push(new Enemy(new Point(50 + i, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
             this.enemies[i].setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
         }
-        console.log("enemies: " + this.enemies.length);
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -687,9 +686,19 @@ var EntityManager = /** @class */ (function () {
         }
     };
     EntityManager.prototype.removeTargetZone = function (zoneIndex) {
-        // Doesn't get destroyed, still want to render it
-        // Just prevent enemies from targeting it
+        // Remove the dead tz from indices array
+        for (var i = 0; i < this.enemyTargetZoneIndices.length; i++) {
+            if (this.enemyTargetZoneIndices[i] === zoneIndex) {
+                this.enemyTargetZoneIndices.splice(i, 1);
+            }
+        }
         // Any enemy with the removed zone's id gets a new zone id
+        for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            if (enemy.targetZoneIndex === zoneIndex) {
+                enemy.setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
+            }
+        }
     };
     return EntityManager;
 }());
@@ -723,6 +732,7 @@ var Enemy = /** @class */ (function (_super) {
             }
         }
         this.targetZoneIndex = closestTzIndex;
+        console.log("set target to: " + this.targetZoneIndex);
     };
     Enemy.prototype.update = function () {
         // Only continue if haven't hit player

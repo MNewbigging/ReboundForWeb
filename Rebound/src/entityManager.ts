@@ -106,12 +106,10 @@ class EntityManager {
         let intervalX: number = canvasWidth / enemyCount; 
         for (let i: number = 0; i < enemyCount; i++) {
             this.enemies.push(new Enemy(new Point(
-                50 + i * intervalX, canvasHeight * 0.1
+                50 + i, canvasHeight * 0.1
             ), "black", 1, 15, new Point(), 3));
             this.enemies[i].setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
         }
-
-        console.log(`enemies: ${this.enemies.length}`);
     }
 
     public updateEntities(): void {
@@ -163,12 +161,19 @@ class EntityManager {
     }
 
     public removeTargetZone(zoneIndex: number): void {
-        // Doesn't get destroyed, still want to render it
-        // Just prevent enemies from targeting it
-        
+        // Remove the dead tz from indices array
+        for (let i: number = 0; i < this.enemyTargetZoneIndices.length; i++) {
+            if (this.enemyTargetZoneIndices[i] === zoneIndex) {
+                this.enemyTargetZoneIndices.splice(i, 1);
+            }
+        }
 
         // Any enemy with the removed zone's id gets a new zone id
-
+        for (let enemy of this.enemies) {
+            if (enemy.targetZoneIndex === zoneIndex) {
+                enemy.setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
+            }
+        }
     }
 
 }

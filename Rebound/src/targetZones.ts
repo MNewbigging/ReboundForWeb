@@ -5,7 +5,7 @@ class EnemyTargetZone extends CircleEntity {
     // Tracks its position in the list of zones held in entity manager
     public targetZoneId: number;
     // Tracks lives
-    private maxLives: number = 3;
+    private maxLives: number = 1;
     public remainingLives: number;
     // Visual cue for lives remaining - the threat circle
     private threatCircleRadius: number = 0;

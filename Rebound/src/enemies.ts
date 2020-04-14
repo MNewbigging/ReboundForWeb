@@ -28,6 +28,7 @@ class Enemy extends CircleMovingEntity {
             }
         }
         this.targetZoneIndex = closestTzIndex;
+        console.log(`set target to: ${this.targetZoneIndex}`);
     }
 
     update(): void {
