@@ -615,6 +615,7 @@ var EntityManager = /** @class */ (function () {
         this.enemySpawnZones = [];
         this.enemyTargetZones = [];
         this.enemyTargetZoneIndices = [];
+        this.playerScore = 0;
         this.setupBumpers();
         this.setupTargetZones();
         this.setupEnemySpawnZones();
@@ -732,6 +733,14 @@ var EntityManager = /** @class */ (function () {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
             }
+        }
+    };
+    EntityManager.prototype.updatePlayerScore = function () {
+        // Adds 1 to player score
+        this.playerScore++;
+        var scoreElement = document.getElementById("score");
+        if (scoreElement) {
+            scoreElement.innerHTML = "Score: " + this.playerScore.toString();
         }
     };
     EntityManager.prototype.renderEntities = function () {
@@ -947,6 +956,7 @@ var Enemy = /** @class */ (function (_super) {
         this.health -= damage;
         if (this.health <= 0) {
             this.alive = false;
+            EntityManager.getInstance().updatePlayerScore();
         }
     };
     return Enemy;

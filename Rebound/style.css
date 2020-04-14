@@ -16,3 +16,9 @@ body {
     width: 100%;
     height: 100%;
 }
+
+#score {    
+    text-align: center;
+    position: absolute;
+    left: 49vw;
+}

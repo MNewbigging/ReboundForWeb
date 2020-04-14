@@ -19,6 +19,7 @@ class EntityManager {
     private enemySpawnCooldownMax: number = 300;
     private enemySpawnCooldown: number = 0;
     private gameOver: boolean = false;
+    private playerScore: number;
 
     public static getInstance(): EntityManager {
         if (!this.instance) {
@@ -62,6 +63,7 @@ class EntityManager {
         this.enemySpawnZones = [];
         this.enemyTargetZones = [];
         this.enemyTargetZoneIndices = [];
+        this.playerScore = 0;
 
         this.setupBumpers();
         this.setupTargetZones();
@@ -185,6 +187,15 @@ class EntityManager {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
             }
+        }
+    }
+
+    public updatePlayerScore(): void {
+        // Adds 1 to player score
+        this.playerScore++;
+        let scoreElement = document.getElementById("score");
+        if (scoreElement) {
+            scoreElement.innerHTML = `Score: ${this.playerScore.toString()}`;
         }
     }
 
