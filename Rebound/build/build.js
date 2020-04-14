@@ -536,9 +536,19 @@ var Player = /** @class */ (function (_super) {
         this.respawnCooldown = this.respawnCooldownMax;
         // Change position back to spawn point
         this.position = new Point(this.spawnPoint.x, this.spawnPoint.y);
+        // Update UI element to show we are respawning
+        var respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "Systems Repairing...";
+        }
     };
     Player.prototype.respawn = function () {
         this.alive = true;
+        // Update UI element to show we are respawning
+        var respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "Systems Online";
+        }
     };
     return Player;
 }(CircleMovingEntity));
@@ -789,7 +799,6 @@ var EntityManager = /** @class */ (function () {
         }
         // Check if any target zones remain
         if (this.enemyTargetZoneIndices.length === 0) {
-            console.log("GAME OVER!");
             this.gameOver = true;
         }
         else {

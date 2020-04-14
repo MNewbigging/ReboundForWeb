@@ -241,7 +241,6 @@ class EntityManager {
 
         // Check if any target zones remain
         if (this.enemyTargetZoneIndices.length === 0) {
-            console.log("GAME OVER!");
             this.gameOver = true;
         }
         else {
