@@ -522,7 +522,7 @@ var EnemyTargetZone = /** @class */ (function (_super) {
     function EnemyTargetZone(id, p, col, lw, r) {
         var _this = _super.call(this, p, col, lw, r) || this;
         // Tracks lives
-        _this.maxLives = 1;
+        _this.maxLives = 5;
         // Visual cue for lives remaining - the threat circle
         _this.threatCircleRadius = 0;
         _this.threatCircleColor = "red";
@@ -564,21 +564,34 @@ var EnemyTargetZone = /** @class */ (function (_super) {
     };
     return EnemyTargetZone;
 }(CircleEntity));
+/// <reference path="entities.ts" />
+var EnemySpawnZone = /** @class */ (function (_super) {
+    __extends(EnemySpawnZone, _super);
+    function EnemySpawnZone() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return EnemySpawnZone;
+}(CircleEntity));
 /// <reference path="player.ts" />
 /// <reference path="bumpers.ts" />
 /// <reference path="enemies.ts" />
 /// <reference path="canvasUtils.ts" />
 /// <reference path="targetZones.ts" />
+/// <reference path="spawnZones.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
+        this.enemySpawnCooldownMax = 200;
+        this.enemySpawnCooldown = 0;
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
+        this.enemySpawnZones = [];
         this.enemyTargetZones = [];
         this.enemyTargetZoneIndices = [];
         this.setupBumpers();
         this.setupTargetZones();
-        this.setupEnemies();
+        this.setupEnemySpawnZones();
+        //this.setupEnemies();
         this.player = new Player();
     }
     EntityManager.getInstance = function () {
@@ -610,7 +623,6 @@ var EntityManager = /** @class */ (function () {
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
         this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.5);
         this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.5);
-        console.log("" + canvasHeight);
         // Top bumper
         this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, 0), "black", 1, canvasWidth * 0.5, 30, "black"));
         // Bot bumper
@@ -648,15 +660,9 @@ var EntityManager = /** @class */ (function () {
         this.enemyTargetZoneIndices.push(0);
         this.enemyTargetZoneIndices.push(1);
     };
-    EntityManager.prototype.setupEnemies = function () {
-        var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
-        var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        var enemyCount = 2;
-        var intervalX = canvasWidth / enemyCount;
-        for (var i = 0; i < enemyCount; i++) {
-            this.enemies.push(new Enemy(new Point(50 + i, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
-            this.enemies[i].setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
-        }
+    EntityManager.prototype.setupEnemySpawnZones = function () {
+        var spawnZoneA = new Point(470, 100);
+        this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneA, "yellow", 1, 20));
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -665,6 +671,20 @@ var EntityManager = /** @class */ (function () {
             enemy.update();
         }
         this.removeDeadEnemies();
+        this.spawnEnemies();
+    };
+    /*
+     *  Current spawning behaviour: all spawn points spawn a new enemy every n frames
+     */
+    EntityManager.prototype.spawnEnemies = function () {
+        this.enemySpawnCooldown--;
+        if (this.enemySpawnCooldown <= 0) {
+            for (var _i = 0, _a = this.enemySpawnZones; _i < _a.length; _i++) {
+                var spawnZone = _a[_i];
+                this.enemies.push(new Enemy(new Point(spawnZone.position.x, spawnZone.position.y), "blue", 1, 15, new Point(), 3));
+            }
+            this.enemySpawnCooldown = this.enemySpawnCooldownMax;
+        }
     };
     EntityManager.prototype.removeDeadEnemies = function () {
         // TODO - move this so it isn't called in update
@@ -698,12 +718,17 @@ var EntityManager = /** @class */ (function () {
             var tz = _g[_f];
             tz.draw();
         }
-        // Enemies
+        // Enemies 
         if (this.enemies.length > 0) {
             for (var _h = 0, _j = this.enemies; _h < _j.length; _h++) {
                 var enemy = _j[_h];
                 enemy.draw();
             }
+        }
+        // Enemy spawn zones
+        for (var _k = 0, _l = this.enemySpawnZones; _k < _l.length; _k++) {
+            var spz = _l[_k];
+            spz.draw();
         }
     };
     EntityManager.prototype.removeTargetZone = function (zoneIndex) {
@@ -717,7 +742,7 @@ var EntityManager = /** @class */ (function () {
         for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
             var enemy = _a[_i];
             if (enemy.targetZoneIndex === zoneIndex) {
-                enemy.setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
+                enemy.setTargetZone();
             }
         }
     };
@@ -736,24 +761,24 @@ var Enemy = /** @class */ (function (_super) {
         _this.directionCooldown = 0;
         // Default targeted zone for this enemy; random index within tz list
         _this.targetZoneIndex = 0;
+        _this.setTargetZone();
         return _this;
     }
-    Enemy.prototype.setTargetZone = function (targetZones, targetZoneIndices) {
+    Enemy.prototype.setTargetZone = function () {
         // Set target zone index to nearest tz at spawn time
         var closestDistance = CanvasUtils.getInstance().getCanvas().width;
         var closestTzIndex = 0;
         // Use indices array rather than directly in tz array, in case some tzs aren't valid targets       
-        for (var _i = 0, targetZoneIndices_1 = targetZoneIndices; _i < targetZoneIndices_1.length; _i++) {
-            var tzIndex = targetZoneIndices_1[_i];
+        for (var _i = 0, _a = EntityManager.getInstance().getEnemyTargetZoneIndices(); _i < _a.length; _i++) {
+            var tzIndex = _a[_i];
             // Check distance, overwrite if lower than current closest dist value
-            var distance = Point.Distance(this.position, targetZones[tzIndex].position);
+            var distance = Point.Distance(this.position, EntityManager.getInstance().getEnemyTargetZones()[tzIndex].position);
             if (distance < closestDistance) {
                 closestDistance = distance;
                 closestTzIndex = tzIndex;
             }
         }
         this.targetZoneIndex = closestTzIndex;
-        console.log("set target to: " + this.targetZoneIndex);
     };
     Enemy.prototype.update = function () {
         // Only continue if haven't hit player

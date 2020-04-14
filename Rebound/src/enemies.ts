@@ -12,23 +12,23 @@ class Enemy extends CircleMovingEntity {
 
     constructor(p: Point, col: string, lw: number, r: number, dir: Point, speed: number) {
         super(p, col, lw, r, dir, speed);
+        this.setTargetZone();
     }
 
-    public setTargetZone(targetZones: EnemyTargetZone[], targetZoneIndices: number[]): void {
+    public setTargetZone(): void {
         // Set target zone index to nearest tz at spawn time
         let closestDistance: number = CanvasUtils.getInstance().getCanvas().width;
         let closestTzIndex: number = 0;
         // Use indices array rather than directly in tz array, in case some tzs aren't valid targets       
-        for (let tzIndex of targetZoneIndices) {
+        for (let tzIndex of EntityManager.getInstance().getEnemyTargetZoneIndices()) {
             // Check distance, overwrite if lower than current closest dist value
-            let distance: number = Point.Distance(this.position, targetZones[tzIndex].position);
+            let distance: number = Point.Distance(this.position, EntityManager.getInstance().getEnemyTargetZones()[tzIndex].position);
             if (distance < closestDistance) {
                 closestDistance = distance;
                 closestTzIndex = tzIndex;
             }
         }
         this.targetZoneIndex = closestTzIndex;
-        console.log(`set target to: ${this.targetZoneIndex}`);
     }
 
     update(): void {

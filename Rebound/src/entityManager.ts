@@ -3,6 +3,7 @@
 /// <reference path="enemies.ts" />
 /// <reference path="canvasUtils.ts" />
 /// <reference path="targetZones.ts" />
+/// <reference path="spawnZones.ts" />
 
 
 class EntityManager {
@@ -10,9 +11,13 @@ class EntityManager {
     private player: Player;
     private circleBumpers: CircleBumper[];
     private rectBumpers: RectangleBumper[];
+    // TODO - move enemy stuff to separate manager class
     private enemies: Enemy[];
+    private enemySpawnZones: EnemySpawnZone[];
     private enemyTargetZones: EnemyTargetZone[];
     private enemyTargetZoneIndices: number[];
+    private enemySpawnCooldownMax: number = 200;
+    private enemySpawnCooldown: number = 0;
 
     public static getInstance(): EntityManager {
         if (!this.instance) {
@@ -49,12 +54,14 @@ class EntityManager {
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
+        this.enemySpawnZones = [];
         this.enemyTargetZones = [];
         this.enemyTargetZoneIndices = [];
 
         this.setupBumpers();
         this.setupTargetZones();
-        this.setupEnemies();
+        this.setupEnemySpawnZones();
+        //this.setupEnemies();
 
         this.player = new Player();
     }
@@ -65,7 +72,6 @@ class EntityManager {
         this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.5);
         this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.5);
 
-        console.log(`${canvasHeight}`);
         // Top bumper
         this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, 0), "black", 1, canvasWidth * 0.5, 30, "black"));
         // Bot bumper
@@ -126,18 +132,10 @@ class EntityManager {
         this.enemyTargetZoneIndices.push(1);
     }
 
-    private setupEnemies(): void {
-        let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
-        let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
+    private setupEnemySpawnZones(): void {
+        let spawnZoneA: Point = new Point(470, 100);
 
-        let enemyCount: number = 2;
-        let intervalX: number = canvasWidth / enemyCount; 
-        for (let i: number = 0; i < enemyCount; i++) {
-            this.enemies.push(new Enemy(new Point(
-                50 + i, canvasHeight * 0.1
-            ), "black", 1, 15, new Point(), 3));
-            this.enemies[i].setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
-        }
+        this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneA, "yellow", 1, 20));
     }
 
     public updateEntities(): void {
@@ -148,6 +146,21 @@ class EntityManager {
         }
 
         this.removeDeadEnemies();
+
+        this.spawnEnemies();
+    }
+
+    /*
+     *  Current spawning behaviour: all spawn points spawn a new enemy every n frames
+     */
+    private spawnEnemies(): void {
+        this.enemySpawnCooldown--;
+        if (this.enemySpawnCooldown <= 0) {
+            for (let spawnZone of this.enemySpawnZones) {
+                this.enemies.push(new Enemy(new Point(spawnZone.position.x, spawnZone.position.y), "blue", 1, 15, new Point(), 3));
+            }
+            this.enemySpawnCooldown = this.enemySpawnCooldownMax;
+        }
     }
 
     private removeDeadEnemies(): void {
@@ -179,12 +192,15 @@ class EntityManager {
         for (let tz of this.enemyTargetZones) {
             tz.draw();
         }
-
-        // Enemies
+        // Enemies 
         if (this.enemies.length > 0) {
             for (let enemy of this.enemies) {
                 enemy.draw();
             }
+        }
+        // Enemy spawn zones
+        for (let spz of this.enemySpawnZones) {
+            spz.draw();
         }
     }
 
@@ -199,7 +215,7 @@ class EntityManager {
         // Any enemy with the removed zone's id gets a new zone id
         for (let enemy of this.enemies) {
             if (enemy.targetZoneIndex === zoneIndex) {
-                enemy.setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
+                enemy.setTargetZone();
             }
         }
     }
