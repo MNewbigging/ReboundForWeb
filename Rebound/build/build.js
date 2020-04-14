@@ -46,6 +46,10 @@ var Point = /** @class */ (function () {
         var scaledPoint = new Point(p2.x * scalar, p2.y * scalar);
         return new Point(p1.x - scaledPoint.x, p1.y - scaledPoint.y);
     };
+    Point.Distance = function (p1, p2) {
+        var distanceVector = Point.Subtract(p2, p1);
+        return Point.Length(distanceVector);
+    };
     Point.Print = function (point, pre) {
         if (!pre) {
             pre = "";
@@ -413,115 +417,6 @@ var RectangleBumper = /** @class */ (function (_super) {
     return RectangleBumper;
 }(RectangleEntity));
 /// <reference path="entities.ts" />
-/// <reference path="utils.ts" />
-var Enemy = /** @class */ (function (_super) {
-    __extends(Enemy, _super);
-    function Enemy() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.alive = true;
-        _this.health = 100;
-        // Denies changing direction in update (allows for simple impulses)
-        _this.directionCooldown = 0;
-        // Default targeted zone for this enemy; random index within tz list
-        _this.targetZoneIndex = 0;
-        return _this;
-    }
-    Enemy.prototype.update = function () {
-        // Only continue if haven't hit player
-        if (!this.enemyHasCollidedWithPlayer()) {
-            // direction cooldown tick
-            this.directionCooldown -= 1;
-            // Check for bumpers
-            this.checkCollisionsWithBumpers();
-            // Check for other enemies
-            // Set direction
-            this.setFacingDirection();
-            // Move
-            _super.prototype.update.call(this);
-        }
-        // Player has been hit
-        else {
-            // Damage player - repawn endlessly after delay (in meantime enemies head towads target zones)
-        }
-    };
-    Enemy.prototype.enemyHasCollidedWithPlayer = function () {
-        if (Utils.CirclesIntersect(EntityManager.getInstance().getPlayer().position, EntityManager.getInstance().getPlayer().radius, this.position, this.radius)) {
-            return true;
-        }
-        return false;
-    };
-    Enemy.prototype.checkCollisionsWithBumpers = function () {
-        this.checkCollisionsWithCircleBumpers();
-        this.checkCollisionsWithRectBumpers();
-    };
-    Enemy.prototype.checkCollisionsWithCircleBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
-            var bumper = _a[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
-                // Give impulse similar to bullet bounce
-                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
-                this.direction = Point.Reflect(this.direction, colNormal);
-                this.directionCooldown = 20;
-                break;
-            }
-        }
-    };
-    Enemy.prototype.checkCollisionsWithRectBumpers = function () {
-        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
-            var bumper = _a[_i];
-            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
-                // Treat this position as previous (which was outside of collision area)
-                // Avoids normalising two potentially identical points for nan result
-                var prevPos = new Point(this.position.x -= this.direction.x * this.moveSpeed, this.position.y -= this.direction.y * this.moveSpeed);
-                // Get collision normal
-                var closestPoint = Utils.getClosestPointOnRectToCircle(bumper.position, bumper.width, bumper.height, prevPos);
-                var colNormal = Utils.getTargetDirectionNormal(closestPoint, prevPos);
-                // Reflect
-                this.direction = Point.Reflect(this.direction, colNormal);
-                this.directionCooldown = 20;
-                // Can't collide with more than 1 bumper
-                break bumperLoop;
-            }
-        }
-    };
-    Enemy.prototype.checkTargetZoneReached = function (distance) {
-        var bounds = 2;
-        if (distance < bounds) {
-            // reached target zone
-            EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
-            this.alive = false;
-        }
-    };
-    Enemy.prototype.setFacingDirection = function () {
-        // Set direction if no impulse is currently active
-        if (this.directionCooldown <= 0) {
-            this.direction = this.getPriorityTargetDirectionNormal();
-        }
-    };
-    Enemy.prototype.getPriorityTargetDirectionNormal = function () {
-        // Compare distance to this enemy's target zone and the distance to player
-        var distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
-        var distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position));
-        // While we have disatnce calculated here, check if reached target zone already
-        this.checkTargetZoneReached(distanceTotz);
-        if (distanceToPlayer < distanceTotz) {
-            // Head for player
-            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
-        }
-        else {
-            // Head for target zone
-            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
-        }
-    };
-    Enemy.prototype.takeDamage = function (damage) {
-        this.health -= damage;
-        if (this.health <= 0) {
-            this.alive = false;
-        }
-    };
-    return Enemy;
-}(CircleMovingEntity));
-/// <reference path="entities.ts" />
 /// <reference path="bullet.ts" />
 /// <reference path="canvasUtils.ts" />
 /// <reference path="utils.ts" />
@@ -621,31 +516,32 @@ var Player = /** @class */ (function (_super) {
 /// <reference path="entities.ts" />
 var EnemyTargetZone = /** @class */ (function (_super) {
     __extends(EnemyTargetZone, _super);
-    function EnemyTargetZone(p, col, lw, r) {
+    function EnemyTargetZone(id, p, col, lw, r) {
         var _this = _super.call(this, p, col, lw, r) || this;
         // Tracks lives
-        _this.maxLives = 2;
+        _this.maxLives = 3;
         // Visual cue for lives remaining - the threat circle
         _this.threatCircleRadius = 0;
         _this.threatCircleColor = "red";
+        _this.targetZoneId = id;
         _this.remainingLives = _this.maxLives;
         return _this;
     }
     EnemyTargetZone.prototype.reduceLives = function () {
         this.remainingLives -= 1;
         if (this.remainingLives <= 0) {
-            this.gameOver();
+            this.targetZoneDestroyed();
         }
         // Recalculate inner circle radius
         this.recalculateThreatCircleRadius();
     };
-    EnemyTargetZone.prototype.gameOver = function () {
-        this.color = "red";
+    EnemyTargetZone.prototype.targetZoneDestroyed = function () {
+        // Tell the entity manager this zone is no longer a target
+        EntityManager.getInstance().removeTargetZone(this.targetZoneId);
     };
     EnemyTargetZone.prototype.recalculateThreatCircleRadius = function () {
         // Find inverse percentage of lives remaining vs max lives
         var percentage = 100 - (100 * this.remainingLives) / this.maxLives;
-        console.log("perc: " + percentage);
         // That's the percentage of total target zone radius for the threat circle
         this.threatCircleRadius = this.radius * (percentage / 100);
     };
@@ -672,13 +568,15 @@ var EnemyTargetZone = /** @class */ (function (_super) {
 /// <reference path="targetZones.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
-        this.player = new Player();
         this.circleBumpers = [];
         this.rectBumpers = [];
         this.enemies = [];
         this.enemyTargetZones = [];
+        this.enemyTargetZoneIndices = [];
         this.setupBumpers();
+        this.setupTargetZones();
         this.setupEnemies();
+        this.player = new Player();
     }
     EntityManager.getInstance = function () {
         if (!this.instance) {
@@ -701,6 +599,9 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.getEnemyTargetZones = function () {
         return this.enemyTargetZones;
     };
+    EntityManager.prototype.getEnemyTargetZoneIndices = function () {
+        return this.enemyTargetZoneIndices;
+    };
     EntityManager.prototype.setupBumpers = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
@@ -714,11 +615,28 @@ var EntityManager = /** @class */ (function () {
         this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.1, canvasHeight * 0.2), "orange", lineWidth, circleBumperRadius));
         this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.9, canvasHeight * 0.2), "orange", lineWidth, circleBumperRadius));
     };
+    EntityManager.prototype.setupTargetZones = function () {
+        var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
+        var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
+        var maxTargetZones = 2;
+        var zonesInterval = canvasWidth / maxTargetZones;
+        for (var i = 0; i < maxTargetZones; i++) {
+            // Create the target zone
+            this.enemyTargetZones.push(new EnemyTargetZone(i, new Point(100 + i * zonesInterval, canvasHeight * 0.8), "purple", 1, 30));
+            // Add tz id to array
+            this.enemyTargetZoneIndices.push(i);
+        }
+    };
     EntityManager.prototype.setupEnemies = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        this.enemyTargetZones.push(new EnemyTargetZone(new Point(canvasWidth * 0.5, canvasHeight * 0.8), "purple", 1, 30));
-        this.enemies.push(new Enemy(new Point(canvasWidth * 0.5, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
+        var enemyCount = 5;
+        var intervalX = canvasWidth / enemyCount;
+        for (var i = 0; i < enemyCount; i++) {
+            this.enemies.push(new Enemy(new Point(50 + i * intervalX, canvasHeight * 0.1), "black", 1, 15, new Point(), 3));
+            this.enemies[i].setTargetZone(this.enemyTargetZones, this.enemyTargetZoneIndices);
+        }
+        console.log("enemies: " + this.enemies.length);
     };
     EntityManager.prototype.updateEntities = function () {
         this.player.update();
@@ -729,6 +647,7 @@ var EntityManager = /** @class */ (function () {
         this.removeDeadEnemies();
     };
     EntityManager.prototype.removeDeadEnemies = function () {
+        // TODO - move this so it isn't called in update
         for (var i = 0; i < this.enemies.length; i++) {
             if (!this.enemies[i].alive) {
                 this.enemies.splice(i, 1);
@@ -767,8 +686,139 @@ var EntityManager = /** @class */ (function () {
             }
         }
     };
+    EntityManager.prototype.removeTargetZone = function (zoneIndex) {
+        // Doesn't get destroyed, still want to render it
+        // Just prevent enemies from targeting it
+        // Any enemy with the removed zone's id gets a new zone id
+    };
     return EntityManager;
 }());
+/// <reference path="entities.ts" />
+/// <reference path="utils.ts" />
+/// <reference path="entityManager.ts" />
+var Enemy = /** @class */ (function (_super) {
+    __extends(Enemy, _super);
+    function Enemy(p, col, lw, r, dir, speed) {
+        var _this = _super.call(this, p, col, lw, r, dir, speed) || this;
+        _this.alive = true;
+        _this.health = 100;
+        // Denies changing direction in update (allows for simple impulses)
+        _this.directionCooldown = 0;
+        // Default targeted zone for this enemy; random index within tz list
+        _this.targetZoneIndex = 0;
+        return _this;
+    }
+    Enemy.prototype.setTargetZone = function (targetZones, targetZoneIndices) {
+        // Set target zone index to nearest tz at spawn time
+        var closestDistance = CanvasUtils.getInstance().getCanvas().width;
+        var closestTzIndex = 0;
+        // Use indices array rather than directly in tz array, in case some tzs aren't valid targets       
+        for (var _i = 0, targetZoneIndices_1 = targetZoneIndices; _i < targetZoneIndices_1.length; _i++) {
+            var tzIndex = targetZoneIndices_1[_i];
+            // Check distance, overwrite if lower than current closest dist value
+            var distance = Point.Distance(this.position, targetZones[tzIndex].position);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestTzIndex = tzIndex;
+            }
+        }
+        this.targetZoneIndex = closestTzIndex;
+    };
+    Enemy.prototype.update = function () {
+        // Only continue if haven't hit player
+        if (!this.enemyHasCollidedWithPlayer()) {
+            // direction cooldown tick
+            this.directionCooldown -= 1;
+            // Check for bumpers
+            this.checkCollisionsWithBumpers();
+            // Check for other enemies
+            // Set direction
+            this.setFacingDirection();
+            // Move
+            _super.prototype.update.call(this);
+        }
+        // Player has been hit
+        else {
+            // Damage player - repawn after delay (in meantime enemies head towads target zones)
+        }
+    };
+    Enemy.prototype.enemyHasCollidedWithPlayer = function () {
+        if (Utils.CirclesIntersect(EntityManager.getInstance().getPlayer().position, EntityManager.getInstance().getPlayer().radius, this.position, this.radius)) {
+            return true;
+        }
+        return false;
+    };
+    Enemy.prototype.checkCollisionsWithBumpers = function () {
+        this.checkCollisionsWithCircleBumpers();
+        this.checkCollisionsWithRectBumpers();
+    };
+    Enemy.prototype.checkCollisionsWithCircleBumpers = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
+                // Give impulse similar to bullet bounce
+                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 20;
+                break;
+            }
+        }
+    };
+    Enemy.prototype.checkCollisionsWithRectBumpers = function () {
+        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
+                // Treat this position as previous (which was outside of collision area)
+                // Avoids normalising two potentially identical points for nan result
+                var prevPos = new Point(this.position.x -= this.direction.x * this.moveSpeed, this.position.y -= this.direction.y * this.moveSpeed);
+                // Get collision normal
+                var closestPoint = Utils.getClosestPointOnRectToCircle(bumper.position, bumper.width, bumper.height, prevPos);
+                var colNormal = Utils.getTargetDirectionNormal(closestPoint, prevPos);
+                // Reflect
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 20;
+                // Can't collide with more than 1 bumper
+                break bumperLoop;
+            }
+        }
+    };
+    Enemy.prototype.checkTargetZoneReached = function (distance) {
+        var bounds = 2;
+        if (distance < bounds) {
+            // reached target zone
+            EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
+            this.alive = false;
+        }
+    };
+    Enemy.prototype.setFacingDirection = function () {
+        // Set direction if no impulse is currently active
+        if (this.directionCooldown <= 0) {
+            this.direction = this.getPriorityTargetDirectionNormal();
+        }
+    };
+    Enemy.prototype.getPriorityTargetDirectionNormal = function () {
+        // Compare distance to this enemy's target zone and the distance to player
+        var distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
+        var distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position));
+        // While we have disatnce calculated here, check if reached target zone already
+        this.checkTargetZoneReached(distanceTotz);
+        if (distanceToPlayer < distanceTotz) {
+            // Head for player
+            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
+        }
+        else {
+            // Head for target zone
+            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
+        }
+    };
+    Enemy.prototype.takeDamage = function (damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.alive = false;
+        }
+    };
+    return Enemy;
+}(CircleMovingEntity));
 var KeyboardInput = /** @class */ (function () {
     function KeyboardInput() {
         var _this = this;

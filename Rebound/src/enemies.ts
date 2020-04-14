@@ -1,5 +1,6 @@
 /// <reference path="entities.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="entityManager.ts" />
 
 class Enemy extends CircleMovingEntity {
     public alive: boolean = true;
@@ -7,7 +8,27 @@ class Enemy extends CircleMovingEntity {
     // Denies changing direction in update (allows for simple impulses)
     private directionCooldown: number = 0;
     // Default targeted zone for this enemy; random index within tz list
-    private targetZoneIndex: number = 0;
+    public targetZoneIndex: number = 0;
+
+    constructor(p: Point, col: string, lw: number, r: number, dir: Point, speed: number) {
+        super(p, col, lw, r, dir, speed);
+    }
+
+    public setTargetZone(targetZones: EnemyTargetZone[], targetZoneIndices: number[]): void {
+        // Set target zone index to nearest tz at spawn time
+        let closestDistance: number = CanvasUtils.getInstance().getCanvas().width;
+        let closestTzIndex: number = 0;
+        // Use indices array rather than directly in tz array, in case some tzs aren't valid targets       
+        for (let tzIndex of targetZoneIndices) {
+            // Check distance, overwrite if lower than current closest dist value
+            let distance: number = Point.Distance(this.position, targetZones[tzIndex].position);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestTzIndex = tzIndex;
+            }
+        }
+        this.targetZoneIndex = closestTzIndex;
+    }
 
     update(): void {
         // Only continue if haven't hit player
@@ -29,7 +50,7 @@ class Enemy extends CircleMovingEntity {
         }
         // Player has been hit
         else {
-            // Damage player - repawn endlessly after delay (in meantime enemies head towads target zones)
+            // Damage player - repawn after delay (in meantime enemies head towads target zones)
             
         }
     }
@@ -89,7 +110,6 @@ class Enemy extends CircleMovingEntity {
             // reached target zone
             EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;
-
         }
     }
 

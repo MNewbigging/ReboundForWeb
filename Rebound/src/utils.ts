@@ -45,6 +45,11 @@ class Point {
         return new Point(p1.x - scaledPoint.x, p1.y - scaledPoint.y);
     }
 
+    public static Distance(p1: Point, p2: Point): number {
+        let distanceVector: Point = Point.Subtract(p2, p1);
+        return Point.Length(distanceVector); 
+    }
+
     public static Print(point: Point, pre?: string): void {
         if (!pre) {
             pre = "";

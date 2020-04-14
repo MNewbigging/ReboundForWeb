@@ -2,35 +2,38 @@
 
 
 class EnemyTargetZone extends CircleEntity {
+    // Tracks its position in the list of zones held in entity manager
+    public targetZoneId: number;
     // Tracks lives
-    private maxLives: number = 2;
+    private maxLives: number = 3;
     public remainingLives: number;
     // Visual cue for lives remaining - the threat circle
     private threatCircleRadius: number = 0;
     private threatCircleColor: string = "red";
 
-    constructor(p: Point, col: string, lw: number, r: number) {
+    constructor(id: number, p: Point, col: string, lw: number, r: number) {
         super(p, col, lw, r);
+        this.targetZoneId = id;
         this.remainingLives = this.maxLives;
     }
     
     public reduceLives(): void {
         this.remainingLives -= 1;
         if (this.remainingLives <= 0) {
-            this.gameOver();
+            this.targetZoneDestroyed();
         }
         // Recalculate inner circle radius
         this.recalculateThreatCircleRadius();
     }
 
-    private gameOver(): void {
-        this.color = "red";
+    private targetZoneDestroyed(): void {
+        // Tell the entity manager this zone is no longer a target
+        EntityManager.getInstance().removeTargetZone(this.targetZoneId);
     }
 
     private recalculateThreatCircleRadius(): void {
         // Find inverse percentage of lives remaining vs max lives
-        let percentage: number = 100 -(100 * this.remainingLives) / this.maxLives;
-        console.log(`perc: ${percentage}`);
+        let percentage: number = 100 - (100 * this.remainingLives) / this.maxLives;
 
         // That's the percentage of total target zone radius for the threat circle
         this.threatCircleRadius = this.radius * (percentage / 100);
