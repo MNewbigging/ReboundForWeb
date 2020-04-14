@@ -600,7 +600,7 @@ var EnemySpawnZone = /** @class */ (function (_super) {
 /// <reference path="spawnZones.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
-        this.enemySpawnCooldownMax = 500;
+        this.enemySpawnCooldownMax = 300;
         this.enemySpawnCooldown = 0;
         this.gameOver = false;
         this.circleBumpers = [];
@@ -830,6 +830,7 @@ var Enemy = /** @class */ (function (_super) {
         // Check for collisions
         this.checkCollisionsWithPlayer();
         this.checkCollisionsWithBumpers();
+        this.checkCollisionsWithEnemies();
         // Will set direction if under no impulse from collisions
         this.setFacingDirection();
         // Move
@@ -892,6 +893,20 @@ var Enemy = /** @class */ (function (_super) {
             // reached target zone
             EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;
+        }
+    };
+    Enemy.prototype.checkCollisionsWithEnemies = function () {
+        for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            if (enemy != this) {
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
+                    // Give impulse similar to bullet bounce
+                    var colNormal = Utils.getTargetDirectionNormal(enemy.position, this.position);
+                    this.direction = Point.Reflect(this.direction, colNormal);
+                    this.directionCooldown = 10;
+                    break;
+                }
+            }
         }
     };
     Enemy.prototype.setFacingDirection = function () {

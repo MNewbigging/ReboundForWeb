@@ -38,14 +38,13 @@ class Enemy extends CircleMovingEntity {
         // Check for collisions
         this.checkCollisionsWithPlayer();
         this.checkCollisionsWithBumpers();
+        this.checkCollisionsWithEnemies();
 
         // Will set direction if under no impulse from collisions
         this.setFacingDirection();
 
         // Move
         super.update();
-
-
     }
 
     private checkCollisionsWithPlayer(): void {
@@ -113,6 +112,20 @@ class Enemy extends CircleMovingEntity {
             // reached target zone
             EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].reduceLives();
             this.alive = false;
+        }
+    }
+
+    private checkCollisionsWithEnemies(): void {
+        for (let enemy of EntityManager.getInstance().getEnemies()) {
+            if (enemy != this) {
+                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
+                    // Give impulse similar to bullet bounce
+                    let colNormal: Point = Utils.getTargetDirectionNormal(enemy.position, this.position);
+                    this.direction = Point.Reflect(this.direction, colNormal);
+                    this.directionCooldown = 10;
+                    break;
+                }
+            }
         }
     }
 

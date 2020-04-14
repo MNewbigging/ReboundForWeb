@@ -16,7 +16,7 @@ class EntityManager {
     private enemySpawnZones: EnemySpawnZone[];
     private enemyTargetZones: EnemyTargetZone[];
     private enemyTargetZoneIndices: number[];
-    private enemySpawnCooldownMax: number = 500;
+    private enemySpawnCooldownMax: number = 300;
     private enemySpawnCooldown: number = 0;
     private gameOver: boolean = false;
 
