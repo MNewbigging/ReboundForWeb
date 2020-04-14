@@ -32,31 +32,33 @@ class Enemy extends CircleMovingEntity {
     }
 
     update(): void {
-        // Only continue if haven't hit player
-        if (!this.enemyHasCollidedWithPlayer()) {
-            // direction cooldown tick
-            this.directionCooldown -= 1;
+        // Tick down impulse timer
+        this.directionCooldown -= 1;
 
-            // Check for bumpers
-            this.checkCollisionsWithBumpers();
+        // Check for collisions
+        this.checkCollisionsWithPlayer();
+        this.checkCollisionsWithBumpers();
 
-            // Check for other enemies
-            
+        // Will set direction if under no impulse from collisions
+        this.setFacingDirection();
 
-            // Set direction
-            this.setFacingDirection();
+        // Move
+        super.update();
 
-            // Move
-            super.update();
-        }
-        // Player has been hit
-        else {
-            // Damage player - repawn after delay (in meantime enemies head towads target zones)
-            
+
+    }
+
+    private checkCollisionsWithPlayer(): void {
+        if (this.enemyHasCollidedWithPlayer()) {
+            // Respawn player
+            EntityManager.getInstance().respawnPlayer();
         }
     }
 
     private enemyHasCollidedWithPlayer(): boolean {
+        // Can't collide if player is dead
+        if (!EntityManager.getInstance().getPlayer().alive) { return false }
+        // if player not dead, check if intersecting with this enemy
         if (Utils.CirclesIntersect(EntityManager.getInstance().getPlayer().position, EntityManager.getInstance().getPlayer().radius, this.position, this.radius)) {
             return true;
         }
@@ -122,21 +124,28 @@ class Enemy extends CircleMovingEntity {
     }
 
     private getPriorityTargetDirectionNormal(): Point {
-        // Compare distance to this enemy's target zone and the distance to player
-        let distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
-        let distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position,this.position));
-
-        // While we have disatnce calculated here, check if reached target zone already
-        this.checkTargetZoneReached(distanceTotz);
-
-        if (distanceToPlayer < distanceTotz) {
-            // Head for player
-            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
-        }
-        else {
-            // Head for target zone
+        // If the player is dead, head for target zone
+        if (!EntityManager.getInstance().getPlayer().alive) { 
             return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
-        }
+        } 
+        // If player is alive, head for closest between player and target zone
+        else {
+            // Compare distance to this enemy's target zone and the distance to player
+            let distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
+            let distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position,this.position));
+
+            // While we have disatnce calculated here, check if reached target zone already
+            this.checkTargetZoneReached(distanceTotz);
+
+            if (distanceToPlayer < distanceTotz) {
+                // Head for player
+                return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
+            }
+            else {
+                // Head for target zone
+                return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
+            }
+        }      
     }
 
     public takeDamage(damage: number): void {

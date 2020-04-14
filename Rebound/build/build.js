@@ -431,6 +431,9 @@ var Player = /** @class */ (function (_super) {
         _this.maxBullets = 30;
         _this.timeBetweenShots = 0;
         _this.maxTimeBetweenShots = 30;
+        _this.alive = true;
+        _this.respawnCooldownMax = 100;
+        _this.respawnCooldown = 0;
         _this.moveLeft = function () {
             if (!_this.canvasUtils.outOfBoundsLeftOrTop(_this.position.x, _this.moveSpeed, _this.radius)) {
                 _this.direction.x = -1;
@@ -466,15 +469,27 @@ var Player = /** @class */ (function (_super) {
         return _this;
     }
     Player.prototype.update = function () {
-        // Only move the player if it won't collide with an obstacle
-        if (!this.playerWillCollideWithBumper()) {
-            _super.prototype.update.call(this);
+        // If dead, tick down respawn cooldown timer
+        if (!this.alive) {
+            if (this.respawnCooldown <= 0) {
+                this.alive = true;
+                console.log("player is alive");
+            }
+            else {
+                this.respawnCooldown--;
+            }
         }
-        // Tick down time between shots
-        this.timeBetweenShots -= 1;
-        // Clear current dir to stop player moving into next frame
-        this.direction.x = 0;
-        this.direction.y = 0;
+        else {
+            // Only move the player if it won't collide with an obstacle
+            if (!this.playerWillCollideWithBumper()) {
+                _super.prototype.update.call(this);
+            }
+            // Tick down time between shots
+            this.timeBetweenShots -= 1;
+            // Clear current dir to stop player moving into next frame
+            this.direction.x = 0;
+            this.direction.y = 0;
+        }
         // Clear or update dead/live bullets
         this.manageBullets();
     };
@@ -513,6 +528,11 @@ var Player = /** @class */ (function (_super) {
                 this.bullets[i].update();
             }
         }
+    };
+    Player.prototype.die = function () {
+        this.alive = false;
+        this.respawnCooldown = this.respawnCooldownMax;
+        console.log("player is dead");
     };
     return Player;
 }(CircleMovingEntity));
@@ -580,7 +600,7 @@ var EnemySpawnZone = /** @class */ (function (_super) {
 /// <reference path="spawnZones.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
-        this.enemySpawnCooldownMax = 300;
+        this.enemySpawnCooldownMax = 500;
         this.enemySpawnCooldown = 0;
         this.gameOver = false;
         this.circleBumpers = [];
@@ -767,6 +787,9 @@ var EntityManager = /** @class */ (function () {
             }
         }
     };
+    EntityManager.prototype.respawnPlayer = function () {
+        this.player.die();
+    };
     return EntityManager;
 }());
 /// <reference path="entities.ts" />
@@ -802,24 +825,28 @@ var Enemy = /** @class */ (function (_super) {
         this.targetZoneIndex = closestTzIndex;
     };
     Enemy.prototype.update = function () {
-        // Only continue if haven't hit player
-        if (!this.enemyHasCollidedWithPlayer()) {
-            // direction cooldown tick
-            this.directionCooldown -= 1;
-            // Check for bumpers
-            this.checkCollisionsWithBumpers();
-            // Check for other enemies
-            // Set direction
-            this.setFacingDirection();
-            // Move
-            _super.prototype.update.call(this);
-        }
-        // Player has been hit
-        else {
-            // Damage player - repawn after delay (in meantime enemies head towads target zones)
+        // Tick down impulse timer
+        this.directionCooldown -= 1;
+        // Check for collisions
+        this.checkCollisionsWithPlayer();
+        this.checkCollisionsWithBumpers();
+        // Will set direction if under no impulse from collisions
+        this.setFacingDirection();
+        // Move
+        _super.prototype.update.call(this);
+    };
+    Enemy.prototype.checkCollisionsWithPlayer = function () {
+        if (this.enemyHasCollidedWithPlayer()) {
+            // Respawn player
+            EntityManager.getInstance().respawnPlayer();
         }
     };
     Enemy.prototype.enemyHasCollidedWithPlayer = function () {
+        // Can't collide if player is dead
+        if (!EntityManager.getInstance().getPlayer().alive) {
+            return false;
+        }
+        // if player not dead, check if intersecting with this enemy
         if (Utils.CirclesIntersect(EntityManager.getInstance().getPlayer().position, EntityManager.getInstance().getPlayer().radius, this.position, this.radius)) {
             return true;
         }
@@ -874,18 +901,25 @@ var Enemy = /** @class */ (function (_super) {
         }
     };
     Enemy.prototype.getPriorityTargetDirectionNormal = function () {
-        // Compare distance to this enemy's target zone and the distance to player
-        var distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
-        var distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position));
-        // While we have disatnce calculated here, check if reached target zone already
-        this.checkTargetZoneReached(distanceTotz);
-        if (distanceToPlayer < distanceTotz) {
-            // Head for player
-            return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
-        }
-        else {
-            // Head for target zone
+        // If the player is dead, head for target zone
+        if (!EntityManager.getInstance().getPlayer().alive) {
             return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
+        }
+        // If player is alive, head for closest between player and target zone
+        else {
+            // Compare distance to this enemy's target zone and the distance to player
+            var distanceToPlayer = Point.Length(Point.Subtract(EntityManager.getInstance().getPlayer().position, this.position));
+            var distanceTotz = Point.Length(Point.Subtract(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position));
+            // While we have disatnce calculated here, check if reached target zone already
+            this.checkTargetZoneReached(distanceTotz);
+            if (distanceToPlayer < distanceTotz) {
+                // Head for player
+                return Utils.getTargetDirectionNormal(EntityManager.getInstance().getPlayer().position, this.position);
+            }
+            else {
+                // Head for target zone
+                return Utils.getTargetDirectionNormal(EntityManager.getInstance().getEnemyTargetZones()[this.targetZoneIndex].position, this.position);
+            }
         }
     };
     Enemy.prototype.takeDamage = function (damage) {

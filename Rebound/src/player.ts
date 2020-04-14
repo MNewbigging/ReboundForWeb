@@ -9,6 +9,9 @@ class Player extends CircleMovingEntity {
     private maxBullets: number = 30;
     private timeBetweenShots: number = 0;
     private maxTimeBetweenShots: number = 30;
+    public alive: boolean = true;
+    private respawnCooldownMax: number = 100;
+    private respawnCooldown: number = 0;
 
     constructor(pos: Point) {
         super(pos, "green", 2, 10, new Point(), 5);     
@@ -55,17 +58,29 @@ class Player extends CircleMovingEntity {
     }
 
     update(): void {
-        // Only move the player if it won't collide with an obstacle
-        if (!this.playerWillCollideWithBumper()) {
-            super.update();
+        // If dead, tick down respawn cooldown timer
+        if (!this.alive) {
+            if (this.respawnCooldown <= 0) {
+                this.alive = true;
+                console.log("player is alive");
+            } else {
+                this.respawnCooldown--;
+            }
+        } else {
+            // Only move the player if it won't collide with an obstacle
+            if (!this.playerWillCollideWithBumper()) {
+                super.update();
+            }
+
+            // Tick down time between shots
+            this.timeBetweenShots -= 1;
+
+            // Clear current dir to stop player moving into next frame
+            this.direction.x = 0;
+            this.direction.y = 0;
         }
 
-        // Tick down time between shots
-        this.timeBetweenShots -= 1;
-
-        // Clear current dir to stop player moving into next frame
-        this.direction.x = 0;
-        this.direction.y = 0;
+        
 
         // Clear or update dead/live bullets
         this.manageBullets();
@@ -108,5 +123,11 @@ class Player extends CircleMovingEntity {
                 this.bullets[i].update();
             }
         } 
+    }
+
+    public die(): void {
+        this.alive = false;
+        this.respawnCooldown = this.respawnCooldownMax;
+        console.log("player is dead");
     }
 }
