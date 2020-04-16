@@ -36,6 +36,19 @@ class EntityManager {
         return this.circleBumpers;
     }
 
+    public getClosestCircleBumperIndex(position: Point): number {
+        let closestIndex: number = -1; 
+        let closestDistanceSq: number = Infinity;
+        for (let i: number = 0; i < this.circleBumpers.length; i++) {
+            let distanceSq: number = Point.LengthSq(Point.Subtract(this.circleBumpers[i].position, position));
+            if (distanceSq < closestDistanceSq) {
+                closestDistanceSq = distanceSq;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    }
+
     public getRectBumpers(): RectangleBumper[] {
         return this.rectBumpers;
     }
@@ -195,14 +208,8 @@ class EntityManager {
     }
 
     public renderEntities(): void {
-        // Player
-        this.player.draw();
-        // Player bullets
-        if (this.player.bullets.length > 0) {
-            for (let bullet of this.player.bullets) {
-                bullet.draw();
-            }
-        }
+
+
         // Bumpers
         for (let bumper of this.circleBumpers) {
             bumper.draw();
@@ -210,20 +217,30 @@ class EntityManager {
         for (let bumper of this.rectBumpers) {
             bumper.draw();
         }
+        
         // Enemy target zones
         for (let tz of this.enemyTargetZones) {
             tz.draw();
         }
+
         // Enemies 
-        if (this.enemies.length > 0) {
-            for (let enemy of this.enemies) {
-                enemy.draw();
-            }
+        for (let enemy of this.enemies) {
+            enemy.draw();
         }
+        
         // Enemy spawn zones
         for (let spz of this.enemySpawnZones) {
             spz.draw();
         }
+
+        // Player
+        this.player.draw();
+
+        // Player bullets
+        for (let bullet of this.player.bullets) {
+            bullet.draw();
+        }
+        
     }
 
     public removeTargetZone(zoneIndex: number): void {

@@ -504,30 +504,10 @@ var Player = /** @class */ (function (_super) {
         var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         nextPos.x += (this.direction.x * speed);
         nextPos.y += (this.direction.y * speed);
-        /*  Find the closest circle bumper to test for collision, only need to check that one:
-         *  > If intersect, can't collide with any others
-         *  > If this doesn't intersect, definitely won't collide with any others
-         */
-        // Some max value to start off closest distance variable
-        var closestDistanceSq = 99999;
-        // Allows us to find the bumper after distance checks
-        var closestIndex = 0;
-        // Get the circle bumpers from entity manager
-        var cBumpers = EntityManager.getInstance().getCircleBumpers();
-        // Loop through every circle bumper
-        for (var i = 0; i < cBumpers.length; i++) {
-            // Find the distance between this bumper and player
-            var distanceSq = Point.LengthSq(Point.Subtract(cBumpers[i].position, nextPos));
-            // If it's the smallest distance yet
-            if (distanceSq < closestDistanceSq) {
-                // Save the distance
-                closestDistanceSq = distanceSq;
-                // Save the bumper index
-                closestIndex = i;
-            }
-        }
-        // Now test collision on closest circle bumper
-        if (Utils.CirclesIntersect(cBumpers[closestIndex].position, cBumpers[closestIndex].radius, nextPos, this.radius)) {
+        // Only test against closest circle bumper
+        var closest = EntityManager.getInstance().getClosestCircleBumperIndex(nextPos);
+        var bumpers = EntityManager.getInstance().getCircleBumpers();
+        if (Utils.CirclesIntersect(bumpers[closest].position, bumpers[closest].radius, nextPos, this.radius)) {
             return true;
         }
         // Do collision checks against all rectangle bumpers
@@ -656,6 +636,18 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.getCircleBumpers = function () {
         return this.circleBumpers;
     };
+    EntityManager.prototype.getClosestCircleBumperIndex = function (position) {
+        var closestIndex = -1;
+        var closestDistanceSq = Infinity;
+        for (var i = 0; i < this.circleBumpers.length; i++) {
+            var distanceSq = Point.LengthSq(Point.Subtract(this.circleBumpers[i].position, position));
+            if (distanceSq < closestDistanceSq) {
+                closestDistanceSq = distanceSq;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    };
     EntityManager.prototype.getRectBumpers = function () {
         return this.rectBumpers;
     };
@@ -762,40 +754,36 @@ var EntityManager = /** @class */ (function () {
         }
     };
     EntityManager.prototype.renderEntities = function () {
-        // Player
-        this.player.draw();
-        // Player bullets
-        if (this.player.bullets.length > 0) {
-            for (var _i = 0, _a = this.player.bullets; _i < _a.length; _i++) {
-                var bullet = _a[_i];
-                bullet.draw();
-            }
-        }
         // Bumpers
-        for (var _b = 0, _c = this.circleBumpers; _b < _c.length; _b++) {
+        for (var _i = 0, _a = this.circleBumpers; _i < _a.length; _i++) {
+            var bumper = _a[_i];
+            bumper.draw();
+        }
+        for (var _b = 0, _c = this.rectBumpers; _b < _c.length; _b++) {
             var bumper = _c[_b];
             bumper.draw();
         }
-        for (var _d = 0, _e = this.rectBumpers; _d < _e.length; _d++) {
-            var bumper = _e[_d];
-            bumper.draw();
-        }
         // Enemy target zones
-        for (var _f = 0, _g = this.enemyTargetZones; _f < _g.length; _f++) {
-            var tz = _g[_f];
+        for (var _d = 0, _e = this.enemyTargetZones; _d < _e.length; _d++) {
+            var tz = _e[_d];
             tz.draw();
         }
         // Enemies 
-        if (this.enemies.length > 0) {
-            for (var _h = 0, _j = this.enemies; _h < _j.length; _h++) {
-                var enemy = _j[_h];
-                enemy.draw();
-            }
+        for (var _f = 0, _g = this.enemies; _f < _g.length; _f++) {
+            var enemy = _g[_f];
+            enemy.draw();
         }
         // Enemy spawn zones
-        for (var _k = 0, _l = this.enemySpawnZones; _k < _l.length; _k++) {
-            var spz = _l[_k];
+        for (var _h = 0, _j = this.enemySpawnZones; _h < _j.length; _h++) {
+            var spz = _j[_h];
             spz.draw();
+        }
+        // Player
+        this.player.draw();
+        // Player bullets
+        for (var _k = 0, _l = this.player.bullets; _k < _l.length; _k++) {
+            var bullet = _l[_k];
+            bullet.draw();
         }
     };
     EntityManager.prototype.removeTargetZone = function (zoneIndex) {
