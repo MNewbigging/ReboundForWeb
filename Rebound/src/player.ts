@@ -83,8 +83,14 @@ class Player extends CircleMovingEntity {
             this.direction.y = 0;
         }
 
-        // Clear or update dead/live bullets
-        this.manageBullets();
+        // Update bullets
+        for (let i: number = 0; i < this.bullets.length; i++) {
+            this.bullets[i].update();
+            // If this bullet is now out of bounds, remove it
+            if (this.bullets[i].outOfBounds) {
+                this.bullets.splice(i, 1);
+            }
+        }
     }
 
     private playerWillCollideWithBumper(): boolean {
@@ -112,18 +118,6 @@ class Player extends CircleMovingEntity {
         }
 
         return playerWillCollide;
-    }
-
-    private manageBullets(): void {
-        // Remove any dead bullets (outside of canvas) and update the rest
-        for(let i: number = 0; i < this.bullets.length; i++) {
-            if (this.bullets[i].outOfBounds) {
-                this.bullets.splice(i, 1);
-            }
-            else {
-                this.bullets[i].update();
-            }
-        } 
     }
 
     public die(): void {

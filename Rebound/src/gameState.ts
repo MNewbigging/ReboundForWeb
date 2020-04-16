@@ -4,8 +4,8 @@
 /// <reference path="entityManager.ts" />
 
 class GameState {
-    public canvasUtils: CanvasUtils;
-    public keyInput: KeyboardInput;
+    private canvasUtils: CanvasUtils;
+    private keyInput: KeyboardInput;
     private entityMgr: EntityManager;
 
     constructor() {

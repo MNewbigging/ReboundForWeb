@@ -343,7 +343,7 @@ var Bullet = /** @class */ (function (_super) {
         this.checkCollisionWithEnemies();
     };
     Bullet.prototype.checkCollisionsWithCircleBumpers = function () {
-        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
                 // Get collision normal
@@ -358,12 +358,12 @@ var Bullet = /** @class */ (function (_super) {
                 // Apply any other effects on rebound
                 this.applyReboundEffects();
                 // Can't hit more than one bumper
-                break bumperLoop;
+                break;
             }
         }
     };
     Bullet.prototype.checkCollisionsWithRectBumpers = function () {
-        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 // Treat this position as previous (which was outside of collision area)
@@ -376,7 +376,7 @@ var Bullet = /** @class */ (function (_super) {
                 // Apply other rebound effects
                 this.applyReboundEffects();
                 // Can't hit more than one bumper at once, break
-                break bumperLoop;
+                break;
             }
         }
     };
@@ -489,8 +489,14 @@ var Player = /** @class */ (function (_super) {
             this.direction.x = 0;
             this.direction.y = 0;
         }
-        // Clear or update dead/live bullets
-        this.manageBullets();
+        // Update bullets
+        for (var i = 0; i < this.bullets.length; i++) {
+            this.bullets[i].update();
+            // If this bullet is now out of bounds, remove it
+            if (this.bullets[i].outOfBounds) {
+                this.bullets.splice(i, 1);
+            }
+        }
     };
     Player.prototype.playerWillCollideWithBumper = function () {
         var playerWillCollide = false;
@@ -516,17 +522,6 @@ var Player = /** @class */ (function (_super) {
             }
         }
         return playerWillCollide;
-    };
-    Player.prototype.manageBullets = function () {
-        // Remove any dead bullets (outside of canvas) and update the rest
-        for (var i = 0; i < this.bullets.length; i++) {
-            if (this.bullets[i].outOfBounds) {
-                this.bullets.splice(i, 1);
-            }
-            else {
-                this.bullets[i].update();
-            }
-        }
     };
     Player.prototype.die = function () {
         // Die
@@ -717,6 +712,7 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.updateEntities = function () {
         this.removeDeadEnemies();
         this.spawnEnemies();
+        // Updating player also updates all bullets
         this.player.update();
         for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
             var enemy = _a[_i];
@@ -893,7 +889,7 @@ var Enemy = /** @class */ (function (_super) {
         }
     };
     Enemy.prototype.checkCollisionsWithRectBumpers = function () {
-        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
+        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 // Treat this position as previous (which was outside of collision area)
@@ -906,7 +902,7 @@ var Enemy = /** @class */ (function (_super) {
                 this.direction = Point.Reflect(this.direction, colNormal);
                 this.directionCooldown = 20;
                 // Can't collide with more than 1 bumper
-                break bumperLoop;
+                break;
             }
         }
     };

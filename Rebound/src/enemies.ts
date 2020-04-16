@@ -82,7 +82,6 @@ class Enemy extends CircleMovingEntity {
     }
 
     private checkCollisionsWithRectBumpers(): void {
-        bumperLoop:
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 // Treat this position as previous (which was outside of collision area)
@@ -101,7 +100,7 @@ class Enemy extends CircleMovingEntity {
                 this.directionCooldown = 20;
 
                 // Can't collide with more than 1 bumper
-                break bumperLoop;
+                break;
             }
         }
     }

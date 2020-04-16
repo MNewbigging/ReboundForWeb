@@ -161,6 +161,7 @@ class EntityManager {
 
         this.spawnEnemies();
 
+        // Updating player also updates all bullets
         this.player.update();
 
         for (let enemy of this.enemies) {

@@ -38,7 +38,6 @@ class Bullet extends CircleMovingEntity {
     }
 
     private checkCollisionsWithCircleBumpers(): void {
-        bumperLoop:
         for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
                 // Get collision normal
@@ -57,13 +56,12 @@ class Bullet extends CircleMovingEntity {
                 this.applyReboundEffects();
 
                 // Can't hit more than one bumper
-                break bumperLoop;
+                break;
             }
         }
     }
 
     private checkCollisionsWithRectBumpers(): void {
-        bumperLoop:
         for (let bumper of EntityManager.getInstance().getRectBumpers()) {
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, this.position, this.radius)) {
                 // Treat this position as previous (which was outside of collision area)
@@ -83,7 +81,7 @@ class Bullet extends CircleMovingEntity {
                 this.applyReboundEffects();
 
                 // Can't hit more than one bumper at once, break
-                break bumperLoop;
+                break;
             }
         }
     }
