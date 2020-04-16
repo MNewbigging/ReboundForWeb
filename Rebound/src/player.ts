@@ -94,30 +94,52 @@ class Player extends CircleMovingEntity {
     }
 
     private playerWillCollideWithBumper(): boolean {
-        let playerWillCollide: boolean = false;
         // Simulate where player will be next frame
         let nextPos = new Point(this.position.x, this.position.y);
         let speed: number = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         nextPos.x += (this.direction.x * speed);
         nextPos.y += (this.direction.y * speed);
 
-        // Use the next frame pos to check for collisions with circle bumpers
-        for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
-                playerWillCollide = true;
-                break;
+        /*  Find the closest circle bumper to test for collision, only need to check that one:
+         *  > If intersect, can't collide with any others
+         *  > If this doesn't intersect, definitely won't collide with any others
+         */
+
+        // Some max value to start off closest distance variable
+        let closestDistanceSq: number = 99999;
+        // Allows us to find the bumper after distance checks
+        let closestIndex: number = 0;
+        // Get the circle bumpers from entity manager
+        let cBumpers = EntityManager.getInstance().getCircleBumpers();
+        // Loop through every circle bumper
+        for (let i: number = 0; i < cBumpers.length; i++) {
+            // Find the distance between this bumper and player
+            let distanceSq: number = Point.LengthSq(Point.Subtract(cBumpers[i].position, nextPos));
+            // If it's the smallest distance yet
+            if (distanceSq < closestDistanceSq) {
+                // Save the distance
+                closestDistanceSq = distanceSq;
+                // Save the bumper index
+                closestIndex = i;
+            }
+        } 
+
+        // Now test collision on closest circle bumper
+        if (Utils.CirclesIntersect(cBumpers[closestIndex].position, cBumpers[closestIndex].radius, nextPos, this.radius)) {
+            return true;
+        }
+
+    
+        // Do collision checks against all rectangle bumpers
+        // This is actually cheaper than only testing closest, because you would 
+        // need to test against closest point on rectangle to player, not rect pos/center
+        for (let bumper of EntityManager.getInstance().getRectBumpers()) {
+            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
+                return true;
             }
         }
         
-        // Do the same collision checks against rectangle bumpers
-        for (let bumper of EntityManager.getInstance().getRectBumpers()) {
-            if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
-                playerWillCollide = true;
-                break;
-            }
-        }
-
-        return playerWillCollide;
+        return false;
     }
 
     public die(): void {

@@ -499,29 +499,47 @@ var Player = /** @class */ (function (_super) {
         }
     };
     Player.prototype.playerWillCollideWithBumper = function () {
-        var playerWillCollide = false;
         // Simulate where player will be next frame
         var nextPos = new Point(this.position.x, this.position.y);
         var speed = (this.direction.x != 0 && this.direction.y != 0) ? this.moveSpeed * 0.8 : this.moveSpeed;
         nextPos.x += (this.direction.x * speed);
         nextPos.y += (this.direction.y * speed);
-        // Use the next frame pos to check for collisions with circle bumpers
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+        /*  Find the closest circle bumper to test for collision, only need to check that one:
+         *  > If intersect, can't collide with any others
+         *  > If this doesn't intersect, definitely won't collide with any others
+         */
+        // Some max value to start off closest distance variable
+        var closestDistanceSq = 99999;
+        // Allows us to find the bumper after distance checks
+        var closestIndex = 0;
+        // Get the circle bumpers from entity manager
+        var cBumpers = EntityManager.getInstance().getCircleBumpers();
+        // Loop through every circle bumper
+        for (var i = 0; i < cBumpers.length; i++) {
+            // Find the distance between this bumper and player
+            var distanceSq = Point.LengthSq(Point.Subtract(cBumpers[i].position, nextPos));
+            // If it's the smallest distance yet
+            if (distanceSq < closestDistanceSq) {
+                // Save the distance
+                closestDistanceSq = distanceSq;
+                // Save the bumper index
+                closestIndex = i;
+            }
+        }
+        // Now test collision on closest circle bumper
+        if (Utils.CirclesIntersect(cBumpers[closestIndex].position, cBumpers[closestIndex].radius, nextPos, this.radius)) {
+            return true;
+        }
+        // Do collision checks against all rectangle bumpers
+        // This is actually cheaper than only testing closest, because you would 
+        // need to test against closest point on rectangle to player, not rect pos/center
+        for (var _i = 0, _a = EntityManager.getInstance().getRectBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, nextPos, this.radius)) {
-                playerWillCollide = true;
-                break;
-            }
-        }
-        // Do the same collision checks against rectangle bumpers
-        for (var _b = 0, _c = EntityManager.getInstance().getRectBumpers(); _b < _c.length; _b++) {
-            var bumper = _c[_b];
             if (Utils.isCircleInsideRectArea(bumper.position, bumper.width, bumper.height, nextPos, this.radius)) {
-                playerWillCollide = true;
-                break;
+                return true;
             }
         }
-        return playerWillCollide;
+        return false;
     };
     Player.prototype.die = function () {
         // Die
@@ -710,13 +728,16 @@ var EntityManager = /** @class */ (function () {
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneB, "yellow", 1, 20));
     };
     EntityManager.prototype.updateEntities = function () {
-        this.removeDeadEnemies();
-        this.spawnEnemies();
         // Updating player also updates all bullets
         this.player.update();
-        for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
-            var enemy = _a[_i];
-            enemy.update();
+        this.spawnEnemies();
+        // Update enemies
+        for (var i = 0; i < this.enemies.length; i++) {
+            this.enemies[i].update();
+            // If enemy is now dead, remove it
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
         }
     };
     /*
@@ -730,14 +751,6 @@ var EntityManager = /** @class */ (function () {
                 this.enemies.push(new Enemy(new Point(spawnZone.position.x, spawnZone.position.y), "blue", 1, 15, new Point(), 3));
             }
             this.enemySpawnCooldown = this.enemySpawnCooldownMax;
-        }
-    };
-    EntityManager.prototype.removeDeadEnemies = function () {
-        // TODO - move this so it isn't called in update
-        for (var i = 0; i < this.enemies.length; i++) {
-            if (!this.enemies[i].alive) {
-                this.enemies.splice(i, 1);
-            }
         }
     };
     EntityManager.prototype.updatePlayerScore = function () {

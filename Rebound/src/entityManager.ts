@@ -157,15 +157,18 @@ class EntityManager {
     }
 
     public updateEntities(): void {
-        this.removeDeadEnemies();
-
-        this.spawnEnemies();
-
         // Updating player also updates all bullets
         this.player.update();
 
-        for (let enemy of this.enemies) {
-            enemy.update();
+        this.spawnEnemies();
+
+        // Update enemies
+        for (let i: number = 0; i < this.enemies.length; i++) {
+            this.enemies[i].update();
+            // If enemy is now dead, remove it
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
         }
     }
 
@@ -179,15 +182,6 @@ class EntityManager {
                 this.enemies.push(new Enemy(new Point(spawnZone.position.x, spawnZone.position.y), "blue", 1, 15, new Point(), 3));
             }
             this.enemySpawnCooldown = this.enemySpawnCooldownMax;
-        }
-    }
-
-    private removeDeadEnemies(): void {
-        // TODO - move this so it isn't called in update
-        for (let i: number = 0; i < this.enemies.length; i++) {
-            if (!this.enemies[i].alive) {
-                this.enemies.splice(i, 1);
-            }
         }
     }
 
