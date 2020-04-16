@@ -38,26 +38,24 @@ class Bullet extends CircleMovingEntity {
     }
 
     private checkCollisionsWithCircleBumpers(): void {
-        for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
-                // Get collision normal
-                let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, this.position);
+        // Only check closest one
+        let closestIndex: number = EntityManager.getInstance().getClosestCircleBumperIndex(this.position);
+        let bumpers: CircleBumper[] = EntityManager.getInstance().getCircleBumpers();
+        if (Utils.CirclesIntersect(bumpers[closestIndex].position, bumpers[closestIndex].radius, this.position, this.radius)) {
+            // Get collision normal
+            let colNormal: Point = Utils.getTargetDirectionNormal(bumpers[closestIndex].position, this.position);
 
-                // Adjust bullet direction before colNorm * speed
-                this.direction = Point.Reflect(this.direction, colNormal); 
+            // Adjust bullet direction before colNorm * speed
+            this.direction = Point.Reflect(this.direction, colNormal); 
 
-                // Adjust bullet position by collision normal to prevent further collisions
-                colNormal.x *= this.moveSpeed;
-                colNormal.y *= this.moveSpeed;
-                this.position.x -= colNormal.x;
-                this.position.y -= colNormal.y;
+            // Adjust bullet position by collision normal to prevent further collisions
+            colNormal.x *= this.moveSpeed;
+            colNormal.y *= this.moveSpeed;
+            this.position.x -= colNormal.x;
+            this.position.y -= colNormal.y;
 
-                // Apply any other effects on rebound
-                this.applyReboundEffects();
-
-                // Can't hit more than one bumper
-                break;
-            }
+            // Apply any other effects on rebound
+            this.applyReboundEffects();
         }
     }
 
@@ -95,14 +93,14 @@ class Bullet extends CircleMovingEntity {
     private checkCollisionWithEnemies(): void {
         // Only run checks for enemies if we have a damage greater than 0!
         if (this.damageMultiplier > 0) {
-            for (let enemy of EntityManager.getInstance().getEnemies()) {
-                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
-                    // Damage the enemy
-                    enemy.takeDamage(this.damage * this.damageMultiplier);
-                    // Mark bullet for removal
-                    this.outOfBounds = true;
-                    break;
-                }
+            // Only check closest enemy
+            let closestIndex: number = EntityManager.getInstance().getClosestEnemyIndex(this.position);
+            let enemies: Enemy[] = EntityManager.getInstance().getEnemies();
+            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                // Damage the enemy
+                enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
+                // Mark bullet for removal
+                this.outOfBounds = true;
             }
         }
     }

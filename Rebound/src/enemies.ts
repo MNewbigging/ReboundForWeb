@@ -70,15 +70,14 @@ class Enemy extends CircleMovingEntity {
     }
 
     private checkCollisionsWithCircleBumpers(): void {
-        for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {  
-                // Give impulse similar to bullet bounce
-                let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, this.position);
-                this.direction = Point.Reflect(this.direction, colNormal);
-                this.directionCooldown = 20;
-                break;
-            }
-        } 
+        let closestIndex: number = EntityManager.getInstance().getClosestCircleBumperIndex(this.position);
+        let bumpers: CircleBumper[] = EntityManager.getInstance().getCircleBumpers();
+        if (Utils.CirclesIntersect(bumpers[closestIndex].position, bumpers[closestIndex].radius, this.position, this.radius)) {
+            // Give impulse similar to bullet bounce
+            let colNormal: Point = Utils.getTargetDirectionNormal(bumpers[closestIndex].position, this.position);
+            this.direction = Point.Reflect(this.direction, colNormal);
+            this.directionCooldown = 20;
+        }
     }
 
     private checkCollisionsWithRectBumpers(): void {
@@ -115,15 +114,14 @@ class Enemy extends CircleMovingEntity {
     }
 
     private checkCollisionsWithEnemies(): void {
-        for (let enemy of EntityManager.getInstance().getEnemies()) {
-            if (enemy != this) {
-                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
-                    // Give impulse similar to bullet bounce
-                    let colNormal: Point = Utils.getTargetDirectionNormal(enemy.position, this.position);
-                    this.direction = Point.Reflect(this.direction, colNormal);
-                    this.directionCooldown = 10;
-                    break;
-                }
+        let closestIndex: number = EntityManager.getInstance().getClosestEnemyIndex(this.position);
+        let enemies: Enemy[] = EntityManager.getInstance().getEnemies();
+        if (enemies[closestIndex]) {
+            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                // Give impulse similar to bullet bounce
+                let colNormal: Point = Utils.getTargetDirectionNormal(enemies[closestIndex].position, this.position);
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 10;
             }
         }
     }

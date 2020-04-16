@@ -343,23 +343,21 @@ var Bullet = /** @class */ (function (_super) {
         this.checkCollisionWithEnemies();
     };
     Bullet.prototype.checkCollisionsWithCircleBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
-            var bumper = _a[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
-                // Get collision normal
-                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
-                // Adjust bullet direction before colNorm * speed
-                this.direction = Point.Reflect(this.direction, colNormal);
-                // Adjust bullet position by collision normal to prevent further collisions
-                colNormal.x *= this.moveSpeed;
-                colNormal.y *= this.moveSpeed;
-                this.position.x -= colNormal.x;
-                this.position.y -= colNormal.y;
-                // Apply any other effects on rebound
-                this.applyReboundEffects();
-                // Can't hit more than one bumper
-                break;
-            }
+        // Only check closest one
+        var closestIndex = EntityManager.getInstance().getClosestCircleBumperIndex(this.position);
+        var bumpers = EntityManager.getInstance().getCircleBumpers();
+        if (Utils.CirclesIntersect(bumpers[closestIndex].position, bumpers[closestIndex].radius, this.position, this.radius)) {
+            // Get collision normal
+            var colNormal = Utils.getTargetDirectionNormal(bumpers[closestIndex].position, this.position);
+            // Adjust bullet direction before colNorm * speed
+            this.direction = Point.Reflect(this.direction, colNormal);
+            // Adjust bullet position by collision normal to prevent further collisions
+            colNormal.x *= this.moveSpeed;
+            colNormal.y *= this.moveSpeed;
+            this.position.x -= colNormal.x;
+            this.position.y -= colNormal.y;
+            // Apply any other effects on rebound
+            this.applyReboundEffects();
         }
     };
     Bullet.prototype.checkCollisionsWithRectBumpers = function () {
@@ -388,15 +386,14 @@ var Bullet = /** @class */ (function (_super) {
     Bullet.prototype.checkCollisionWithEnemies = function () {
         // Only run checks for enemies if we have a damage greater than 0!
         if (this.damageMultiplier > 0) {
-            for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
-                var enemy = _a[_i];
-                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
-                    // Damage the enemy
-                    enemy.takeDamage(this.damage * this.damageMultiplier);
-                    // Mark bullet for removal
-                    this.outOfBounds = true;
-                    break;
-                }
+            // Only check closest enemy
+            var closestIndex = EntityManager.getInstance().getClosestEnemyIndex(this.position);
+            var enemies = EntityManager.getInstance().getEnemies();
+            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                // Damage the enemy
+                enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
+                // Mark bullet for removal
+                this.outOfBounds = true;
             }
         }
     };
@@ -654,6 +651,18 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.getEnemies = function () {
         return this.enemies;
     };
+    EntityManager.prototype.getClosestEnemyIndex = function (position) {
+        var closestIndex = -1;
+        var closestDistanceSq = Infinity;
+        for (var i = 0; i < this.enemies.length; i++) {
+            var distanceSq = Point.LengthSq(Point.Subtract(this.enemies[i].position, position));
+            if (distanceSq > 0 && distanceSq < closestDistanceSq) {
+                closestDistanceSq = distanceSq;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    };
     EntityManager.prototype.getEnemyTargetZones = function () {
         return this.enemyTargetZones;
     };
@@ -878,15 +887,13 @@ var Enemy = /** @class */ (function (_super) {
         this.checkCollisionsWithRectBumpers();
     };
     Enemy.prototype.checkCollisionsWithCircleBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
-            var bumper = _a[_i];
-            if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
-                // Give impulse similar to bullet bounce
-                var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
-                this.direction = Point.Reflect(this.direction, colNormal);
-                this.directionCooldown = 20;
-                break;
-            }
+        var closestIndex = EntityManager.getInstance().getClosestCircleBumperIndex(this.position);
+        var bumpers = EntityManager.getInstance().getCircleBumpers();
+        if (Utils.CirclesIntersect(bumpers[closestIndex].position, bumpers[closestIndex].radius, this.position, this.radius)) {
+            // Give impulse similar to bullet bounce
+            var colNormal = Utils.getTargetDirectionNormal(bumpers[closestIndex].position, this.position);
+            this.direction = Point.Reflect(this.direction, colNormal);
+            this.directionCooldown = 20;
         }
     };
     Enemy.prototype.checkCollisionsWithRectBumpers = function () {
@@ -916,16 +923,14 @@ var Enemy = /** @class */ (function (_super) {
         }
     };
     Enemy.prototype.checkCollisionsWithEnemies = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getEnemies(); _i < _a.length; _i++) {
-            var enemy = _a[_i];
-            if (enemy != this) {
-                if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
-                    // Give impulse similar to bullet bounce
-                    var colNormal = Utils.getTargetDirectionNormal(enemy.position, this.position);
-                    this.direction = Point.Reflect(this.direction, colNormal);
-                    this.directionCooldown = 10;
-                    break;
-                }
+        var closestIndex = EntityManager.getInstance().getClosestEnemyIndex(this.position);
+        var enemies = EntityManager.getInstance().getEnemies();
+        if (enemies[closestIndex]) {
+            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                // Give impulse similar to bullet bounce
+                var colNormal = Utils.getTargetDirectionNormal(enemies[closestIndex].position, this.position);
+                this.direction = Point.Reflect(this.direction, colNormal);
+                this.directionCooldown = 10;
             }
         }
     };

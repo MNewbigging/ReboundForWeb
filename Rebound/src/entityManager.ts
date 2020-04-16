@@ -57,6 +57,19 @@ class EntityManager {
         return this.enemies;
     }
 
+    public getClosestEnemyIndex(position: Point): number {
+        let closestIndex: number = -1; 
+        let closestDistanceSq: number = Infinity;
+        for (let i: number = 0; i < this.enemies.length; i++) {
+            let distanceSq: number = Point.LengthSq(Point.Subtract(this.enemies[i].position, position));
+            if (distanceSq > 0 && distanceSq < closestDistanceSq) {
+                closestDistanceSq = distanceSq;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    }
+
     public getEnemyTargetZones(): EnemyTargetZone[] {
         return this.enemyTargetZones;
     }
@@ -217,7 +230,7 @@ class EntityManager {
         for (let bumper of this.rectBumpers) {
             bumper.draw();
         }
-        
+
         // Enemy target zones
         for (let tz of this.enemyTargetZones) {
             tz.draw();

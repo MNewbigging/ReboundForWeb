@@ -102,7 +102,7 @@ class Player extends CircleMovingEntity {
 
         // Only test against closest circle bumper
         let closest: number = EntityManager.getInstance().getClosestCircleBumperIndex(nextPos);
-        let bumpers = EntityManager.getInstance().getCircleBumpers();
+        let bumpers: CircleBumper[] = EntityManager.getInstance().getCircleBumpers();
         if (Utils.CirclesIntersect(bumpers[closest].position, bumpers[closest].radius, nextPos, this.radius)) {
             return true;
         }
