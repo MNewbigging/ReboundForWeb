@@ -143,7 +143,7 @@ class Player extends CircleMovingEntity {
 
     private respawn(): void {
         this.alive = true;
-        // Update UI element to show we are respawning
+        // Update UI element to show we have respawned
         let respawnElement = document.getElementById("respawn");
         if (respawnElement) {
             respawnElement.innerHTML = "Systems Online";

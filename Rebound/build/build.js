@@ -316,7 +316,6 @@ var Bullet = /** @class */ (function (_super) {
         _this.outOfBounds = false;
         _this.damageMultiplier = 0;
         _this.damage = 100;
-        _this.reboundRadiusGrowthStep = 1;
         return _this;
     }
     Bullet.prototype.update = function () {
@@ -344,9 +343,10 @@ var Bullet = /** @class */ (function (_super) {
         this.checkCollisionWithEnemies();
     };
     Bullet.prototype.checkCollisionsWithCircleBumpers = function () {
-        for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
+        bumperLoop: for (var _i = 0, _a = EntityManager.getInstance().getCircleBumpers(); _i < _a.length; _i++) {
             var bumper = _a[_i];
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
+                // Get collision normal
                 var colNormal = Utils.getTargetDirectionNormal(bumper.position, this.position);
                 // Adjust bullet direction before colNorm * speed
                 this.direction = Point.Reflect(this.direction, colNormal);
@@ -357,7 +357,8 @@ var Bullet = /** @class */ (function (_super) {
                 this.position.y -= colNormal.y;
                 // Apply any other effects on rebound
                 this.applyReboundEffects();
-                break;
+                // Can't hit more than one bumper
+                break bumperLoop;
             }
         }
     };
@@ -381,9 +382,7 @@ var Bullet = /** @class */ (function (_super) {
     };
     Bullet.prototype.applyReboundEffects = function () {
         this.damageMultiplier += 1;
-        // TODO - move bullet out of colliding rect by penetration distance + new radius (to avoid further collisions)
-        // OR increase radius over time, or after delay, so bullet has rebounded already when it grows
-        //this.radius += this.reboundRadiusGrowthStep;
+        // TODO - increase bullet radius on hit. Need to move out of collision area by how far bullet penetrates collider to work
         this.color = "red";
     };
     Bullet.prototype.checkCollisionWithEnemies = function () {
@@ -394,7 +393,7 @@ var Bullet = /** @class */ (function (_super) {
                 if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
                     // Damage the enemy
                     enemy.takeDamage(this.damage * this.damageMultiplier);
-                    // Remove this bullet
+                    // Mark bullet for removal
                     this.outOfBounds = true;
                     break;
                 }
@@ -544,7 +543,7 @@ var Player = /** @class */ (function (_super) {
     };
     Player.prototype.respawn = function () {
         this.alive = true;
-        // Update UI element to show we are respawning
+        // Update UI element to show we have respawned
         var respawnElement = document.getElementById("respawn");
         if (respawnElement) {
             respawnElement.innerHTML = "Systems Online";

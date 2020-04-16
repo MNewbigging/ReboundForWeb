@@ -2,11 +2,9 @@
 
 class Bullet extends CircleMovingEntity {
     public outOfBounds: boolean = false; 
-    public damageMultiplier: number = 0;
-    public damage: number = 100;
-    private reboundRadiusGrowthStep: number = 1;
+    private damageMultiplier: number = 0;
+    private damage: number = 100;
     
-
     constructor(p: Point, dir: Point) {
         super(p, "grey", 1, 5, dir, 8);
     }    
@@ -40,19 +38,26 @@ class Bullet extends CircleMovingEntity {
     }
 
     private checkCollisionsWithCircleBumpers(): void {
+        bumperLoop:
         for (let bumper of EntityManager.getInstance().getCircleBumpers()) {
             if (Utils.CirclesIntersect(bumper.position, bumper.radius, this.position, this.radius)) {
+                // Get collision normal
                 let colNormal: Point = Utils.getTargetDirectionNormal(bumper.position, this.position);
+
                 // Adjust bullet direction before colNorm * speed
                 this.direction = Point.Reflect(this.direction, colNormal); 
+
                 // Adjust bullet position by collision normal to prevent further collisions
                 colNormal.x *= this.moveSpeed;
                 colNormal.y *= this.moveSpeed;
                 this.position.x -= colNormal.x;
                 this.position.y -= colNormal.y;
+
                 // Apply any other effects on rebound
                 this.applyReboundEffects();
-                break;
+
+                // Can't hit more than one bumper
+                break bumperLoop;
             }
         }
     }
@@ -85,9 +90,7 @@ class Bullet extends CircleMovingEntity {
 
     private applyReboundEffects(): void {
         this.damageMultiplier += 1;
-        // TODO - move bullet out of colliding rect by penetration distance + new radius (to avoid further collisions)
-        // OR increase radius over time, or after delay, so bullet has rebounded already when it grows
-        //this.radius += this.reboundRadiusGrowthStep;
+        // TODO - increase bullet radius on hit. Need to move out of collision area by how far bullet penetrates collider to work
         this.color = "red";
     }
 
@@ -98,7 +101,7 @@ class Bullet extends CircleMovingEntity {
                 if (Utils.CirclesIntersect(enemy.position, enemy.radius, this.position, this.radius)) {
                     // Damage the enemy
                     enemy.takeDamage(this.damage * this.damageMultiplier);
-                    // Remove this bullet
+                    // Mark bullet for removal
                     this.outOfBounds = true;
                     break;
                 }
