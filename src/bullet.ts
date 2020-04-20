@@ -96,11 +96,13 @@ class Bullet extends CircleMovingEntity {
             // Only check closest enemy
             let closestIndex: number = EntityManager.getInstance().getClosestEnemyIndex(this.position);
             let enemies: Enemy[] = EntityManager.getInstance().getEnemies();
-            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
-                // Damage the enemy
-                enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
-                // Mark bullet for removal
-                this.alive = true;
+            if (enemies.length > 0) {
+                if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                    // Damage the enemy
+                    enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
+                    // Mark bullet for removal
+                    this.alive = true;
+                }
             }
         }
     }

@@ -389,11 +389,13 @@ var Bullet = /** @class */ (function (_super) {
             // Only check closest enemy
             var closestIndex = EntityManager.getInstance().getClosestEnemyIndex(this.position);
             var enemies = EntityManager.getInstance().getEnemies();
-            if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
-                // Damage the enemy
-                enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
-                // Mark bullet for removal
-                this.alive = true;
+            if (enemies.length > 0) {
+                if (Utils.CirclesIntersect(enemies[closestIndex].position, enemies[closestIndex].radius, this.position, this.radius)) {
+                    // Damage the enemy
+                    enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
+                    // Mark bullet for removal
+                    this.alive = true;
+                }
             }
         }
     };
@@ -647,7 +649,7 @@ var EntityManager = /** @class */ (function () {
         this.setupBumpers();
         this.setupTargetZones();
         this.setupEnemySpawnZones();
-        var playerPos = new Point(CanvasUtils.getInstance().getCanvas().width * 0.5, CanvasUtils.getInstance().getCanvas().height * 0.5);
+        var playerPos = new Point(CanvasUtils.getInstance().getCanvas().width * 0.5, CanvasUtils.getInstance().getCanvas().height * 0.8);
         this.player = new Player(playerPos);
     }
     EntityManager.getInstance = function () {
@@ -704,20 +706,30 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.setupBumpers = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.4);
-        this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.4);
-        // Top rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, 0), "black", 1, canvasWidth * 0.5, 30, "black"));
-        // Bot rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.1, canvasHeight - 30), "black", 1, canvasWidth * 0.8, 30, "black"));
-        // Bot left rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(0, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
-        // Bot right rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth - 30, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
-        // Centre circle bumper top
-        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.3), "orange", 1, 40));
-        // Centre circle bumper bot
-        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.7), "orange", 1, 40));
+        // Center rectangle
+        var rectColor = "black";
+        var rectWidth = 30;
+        var rectHeight = 150;
+        var rectXpos = canvasWidth * 0.5 - rectWidth * 0.5;
+        var rectYpos = canvasHeight * 0.5 - rectHeight * 0.5;
+        this.rectBumpers.push(new RectangleBumper(new Point(rectXpos, rectYpos), rectColor, 1, rectWidth, rectHeight, rectColor));
+        // Top left corner rectangles
+        var side = 60;
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.2 - side * 0.5, canvasHeight * 0.3 - side * 0.5), rectColor, 1, side * 4, side, rectColor));
+        // Top right corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.8 - side * 4 + side * 0.5, canvasHeight * 0.3 - side * 0.5), rectColor, 1, side * 4, side, rectColor));
+        // Bot right corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.8 - side * 4 + side * 0.5, canvasHeight * 0.7 - side * 0.5), rectColor, 1, side * 4, side, rectColor));
+        // Bot left corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.2 - side * 0.5, canvasHeight * 0.7 - side * 0.5), rectColor, 1, side * 4, side, rectColor));
+        // Bumpers above/below target zones
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.4, canvasHeight * 0.3), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.6, canvasHeight * 0.3), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.4, canvasHeight * 0.7), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.6, canvasHeight * 0.7), "orange", 1, 20));
+        // Bumpers on edges
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.1, canvasHeight * 0.5), "orange", 1, 50));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.9, canvasHeight * 0.5), "orange", 1, 50));
     };
     // Adds preset bumper layout; circle with 4 squares outside on each axis
     EntityManager.prototype.addBumperSet = function (centerX, centerY) {
@@ -742,18 +754,18 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.setupTargetZones = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        // Bottom left corner tz
-        this.enemyTargetZones.push(new EnemyTargetZone(0, new Point(canvasWidth * 0.2, canvasHeight * 0.8), "purple", 1, 30));
-        // Bottom right corner tz
-        this.enemyTargetZones.push(new EnemyTargetZone(1, new Point(canvasWidth * 0.8, canvasHeight * 0.8), "purple", 1, 30));
+        // Left tz
+        this.enemyTargetZones.push(new EnemyTargetZone(0, new Point(canvasWidth * 0.4, canvasHeight * 0.5), "purple", 1, 30));
+        // Right tz
+        this.enemyTargetZones.push(new EnemyTargetZone(1, new Point(canvasWidth * 0.6, canvasHeight * 0.5), "purple", 1, 30));
         this.enemyTargetZoneIndices.push(0);
         this.enemyTargetZoneIndices.push(1);
     };
     EntityManager.prototype.setupEnemySpawnZones = function () {
         var canvasWidth = CanvasUtils.getInstance().getCanvas().width;
         var canvasHeight = CanvasUtils.getInstance().getCanvas().height;
-        var spawnZoneA = new Point(canvasWidth * 0.1, canvasHeight * 0.1);
-        var spawnZoneB = new Point(canvasWidth * 0.9, canvasHeight * 0.1);
+        var spawnZoneA = new Point(canvasWidth * 0.025, canvasHeight * 0.49);
+        var spawnZoneB = new Point(canvasWidth * 0.975, canvasHeight * 0.51);
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneA, "yellow", 1, 20));
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneB, "yellow", 1, 20));
     };

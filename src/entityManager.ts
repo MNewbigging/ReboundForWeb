@@ -96,28 +96,52 @@ class EntityManager {
         this.setupTargetZones();
         this.setupEnemySpawnZones();
 
-        let playerPos: Point = new Point(CanvasUtils.getInstance().getCanvas().width * 0.5, CanvasUtils.getInstance().getCanvas().height * 0.5);
+        let playerPos: Point = new Point(CanvasUtils.getInstance().getCanvas().width * 0.5, CanvasUtils.getInstance().getCanvas().height * 0.8);
         this.player = new Player(playerPos);
     }
 
     private setupBumpers(): void {
         let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
         let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
-        this.addBumperSet(canvasWidth * 0.2, canvasHeight * 0.4);
-        this.addBumperSet(canvasWidth * 0.8, canvasHeight * 0.4);
 
-        // Top rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.25, 0), "black", 1, canvasWidth * 0.5, 30, "black"));
-        // Bot rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth * 0.1, canvasHeight - 30), "black", 1, canvasWidth * 0.8, 30, "black"));
-        // Bot left rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(0, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
-        // Bot right rect bumper
-        this.rectBumpers.push(new RectangleBumper(new Point(canvasWidth - 30, canvasHeight * 0.6), "black", 1, 30, canvasHeight * 0.4, "black"));
-        // Centre circle bumper top
-        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.3), "orange", 1, 40));
-        // Centre circle bumper bot
-        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.5, canvasHeight * 0.7), "orange", 1, 40));
+        // Center rectangle
+        let rectColor: string = "black";
+        let rectWidth: number = 30;
+        let rectHeight: number = 150;
+        let rectXpos: number = canvasWidth * 0.5 - rectWidth * 0.5;
+        let rectYpos: number = canvasHeight * 0.5 - rectHeight * 0.5;
+        this.rectBumpers.push(new RectangleBumper(new Point(rectXpos, rectYpos), rectColor, 1, rectWidth, rectHeight, rectColor));
+
+        // Top left corner rectangles
+        let side: number = 60;
+        this.rectBumpers.push(new RectangleBumper(new Point
+            (canvasWidth * 0.2 - side * 0.5, canvasHeight * 0.3 - side * 0.5),
+            rectColor, 1, side * 4, side, rectColor));
+
+        // Top right corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point
+            (canvasWidth * 0.8 - side * 4 + side * 0.5, canvasHeight * 0.3 - side * 0.5),
+            rectColor, 1, side * 4, side, rectColor));
+
+        // Bot right corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point
+            (canvasWidth * 0.8 - side * 4 + side * 0.5, canvasHeight * 0.7 - side * 0.5),
+            rectColor, 1, side * 4, side, rectColor));
+
+        // Bot left corner rectangle
+        this.rectBumpers.push(new RectangleBumper(new Point
+            (canvasWidth * 0.2 - side * 0.5, canvasHeight * 0.7 - side * 0.5),
+            rectColor, 1, side * 4, side, rectColor));
+
+        // Bumpers above/below target zones
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.4, canvasHeight * 0.3), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.6, canvasHeight * 0.3), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.4, canvasHeight * 0.7), "orange", 1, 20));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.6, canvasHeight * 0.7), "orange", 1, 20));
+
+        // Bumpers on edges
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.1, canvasHeight * 0.5), "orange", 1, 50));
+        this.circleBumpers.push(new CircleBumper(new Point(canvasWidth * 0.9, canvasHeight * 0.5), "orange", 1, 50));
     }
 
     // Adds preset bumper layout; circle with 4 squares outside on each axis
@@ -158,14 +182,14 @@ class EntityManager {
         let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
         let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
 
-        // Bottom left corner tz
+        // Left tz
         this.enemyTargetZones.push(new EnemyTargetZone(0, new Point(
-            canvasWidth * 0.2, canvasHeight * 0.8
+            canvasWidth * 0.4, canvasHeight * 0.5
         ), "purple", 1, 30));
 
-        // Bottom right corner tz
+        // Right tz
         this.enemyTargetZones.push(new EnemyTargetZone(1, new Point(
-            canvasWidth * 0.8, canvasHeight * 0.8
+            canvasWidth * 0.6, canvasHeight * 0.5
         ), "purple", 1, 30));
 
         this.enemyTargetZoneIndices.push(0);
@@ -176,8 +200,8 @@ class EntityManager {
         let canvasWidth: number = CanvasUtils.getInstance().getCanvas().width;
         let canvasHeight: number = CanvasUtils.getInstance().getCanvas().height;
 
-        let spawnZoneA: Point = new Point(canvasWidth * 0.1, canvasHeight * 0.1);
-        let spawnZoneB: Point = new Point(canvasWidth * 0.9, canvasHeight * 0.1);
+        let spawnZoneA: Point = new Point(canvasWidth * 0.025, canvasHeight * 0.49);
+        let spawnZoneB: Point = new Point(canvasWidth * 0.975, canvasHeight * 0.51);
 
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneA, "yellow", 1, 20));
         this.enemySpawnZones.push(new EnemySpawnZone(spawnZoneB, "yellow", 1, 20));

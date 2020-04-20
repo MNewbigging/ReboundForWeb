@@ -19,10 +19,19 @@ body {
 
 .ui {
     position: absolute;
+  
 }
 
 .center {
     text-align: center;
+}
+
+.left {
+    left: -1%;
+}
+
+.wrap {
+    white-space: pre-wrap;
 }
 
 #score {    
@@ -39,4 +48,8 @@ body {
 #desc {
     top: 90%;
     left: 10vw;
+}
+
+#reboundTip {
+    top: 30%;
 }

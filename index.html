@@ -10,17 +10,24 @@
 <body>
     <p id="score" class="ui center">Score: 0</p>
     <p id="respawn" class="ui center">Systems Online</p> 
-    <div class="ui" style="white-space: pre-wrap;">
+    <div class="ui left wrap">
         WASD - Move
         Mouse - Aim
         Space - Fire
         Refresh to restart
     </div>
 
+    <div id="reboundTip" class="ui left wrap">
+        Bullets must 
+        REBOUND
+        before they can 
+        damage enemies!
+    </div>
+
     <p id="desc" class="ui center" >
         Stop the blue enemies from reaching the purple target zones! 
         As enemies reach the target zones, they fill with red. A fully
-        red target zone is destroyed, and when all zones are gone the game is up!
+        red target zone is destroyed - when all zones are gone the game is up!
     </p>
 
     <div id="game-container">
