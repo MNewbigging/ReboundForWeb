@@ -17,15 +17,26 @@ body {
     height: 100%;
 }
 
-#score {    
-    text-align: center;
+.ui {
     position: absolute;
+}
+
+.center {
+    text-align: center;
+}
+
+#score {    
     left: 45vw;
+    font-size: 1.2em;
 }
 
 #respawn {
-    text-align: center;
-    position: absolute;
     left: 45vw;
     padding-top: 3vh;
+    font-size: 1.2em;
+}
+
+#desc {
+    top: 90%;
+    left: 10vw;
 }

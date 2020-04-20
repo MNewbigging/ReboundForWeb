@@ -424,7 +424,7 @@ var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player(pos) {
         var _this = _super.call(this, pos, "green", 2, 10, new Point(), 5) || this;
-        _this.maxBullets = 30;
+        _this.maxBullets = 20;
         _this.timeBetweenShots = 0;
         _this.maxTimeBetweenShots = 30;
         _this.alive = true;
@@ -615,6 +615,12 @@ var UiManager = /** @class */ (function () {
         var respawnElement = document.getElementById("respawn");
         if (respawnElement) {
             respawnElement.innerHTML = "Systems Online";
+        }
+    };
+    UiManager.prototype.gameOverMessage = function () {
+        var respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "GAME OVER";
         }
     };
     return UiManager;
@@ -837,6 +843,7 @@ var EntityManager = /** @class */ (function () {
         // Check if any target zones remain
         if (this.enemyTargetZoneIndices.length === 0) {
             this.gameOver = true;
+            UiManager.getInstance().gameOverMessage();
         }
         else {
             // Any enemy with the removed zone's id gets a new zone id

@@ -277,6 +277,7 @@ class EntityManager {
         // Check if any target zones remain
         if (this.enemyTargetZoneIndices.length === 0) {
             this.gameOver = true;
+            UiManager.getInstance().gameOverMessage();
         }
         else {
             // Any enemy with the removed zone's id gets a new zone id

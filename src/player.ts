@@ -6,7 +6,7 @@
 
 class Player extends CircleMovingEntity {
     public bullets: Bullet[];
-    private maxBullets: number = 30;
+    private maxBullets: number = 20;
     private timeBetweenShots: number = 0;
     private maxTimeBetweenShots: number = 30;
     public alive: boolean = true;

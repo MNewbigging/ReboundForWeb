@@ -32,4 +32,11 @@ class UiManager {
             respawnElement.innerHTML = "Systems Online";
         }
     }
+
+    public gameOverMessage(): void {
+        let respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "GAME OVER";
+        }
+    }
 }
