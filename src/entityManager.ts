@@ -189,12 +189,8 @@ class EntityManager {
         this.spawnEnemies();
 
         // Update enemies
-        for (let i: number = 0; i < this.enemies.length; i++) {
-            this.enemies[i].update();
-            // If enemy is now dead, remove it
-            if (!this.enemies[i].alive) {
-                this.enemies.splice(i, 1);
-            }
+        for(let enemy of this.enemies) {
+            enemy.update();
         }
 
         this.removeDeadEntities();
@@ -209,6 +205,11 @@ class EntityManager {
         }
 
         // Loop through and remove all dead enemies
+        for (let i: number = 0; i < this.enemies.length; i++) {
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
+        }
     }
 
     /*

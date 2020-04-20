@@ -730,12 +730,9 @@ var EntityManager = /** @class */ (function () {
         this.player.update();
         this.spawnEnemies();
         // Update enemies
-        for (var i = 0; i < this.enemies.length; i++) {
-            this.enemies[i].update();
-            // If enemy is now dead, remove it
-            if (!this.enemies[i].alive) {
-                this.enemies.splice(i, 1);
-            }
+        for (var _i = 0, _a = this.enemies; _i < _a.length; _i++) {
+            var enemy = _a[_i];
+            enemy.update();
         }
         this.removeDeadEntities();
     };
@@ -747,6 +744,11 @@ var EntityManager = /** @class */ (function () {
             }
         }
         // Loop through and remove all dead enemies
+        for (var i = 0; i < this.enemies.length; i++) {
+            if (!this.enemies[i].alive) {
+                this.enemies.splice(i, 1);
+            }
+        }
     };
     /*
      *  Current spawning behaviour: all spawn points spawn a new enemy every n frames
