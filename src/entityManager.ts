@@ -4,6 +4,7 @@
 /// <reference path="canvasUtils.ts" />
 /// <reference path="targetZones.ts" />
 /// <reference path="spawnZones.ts" />
+/// <reference path="uiManager.ts" />
 
 
 class EntityManager {
@@ -228,10 +229,7 @@ class EntityManager {
     public updatePlayerScore(): void {
         // Adds 1 to player score
         this.playerScore++;
-        let scoreElement = document.getElementById("score");
-        if (scoreElement) {
-            scoreElement.innerHTML = `Score: ${this.playerScore.toString()}`;
-        }
+        UiManager.getInstance().updatePlayerScore(this.playerScore);
     }
 
     public renderEntities(): void {

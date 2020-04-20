@@ -522,19 +522,13 @@ var Player = /** @class */ (function (_super) {
         this.respawnCooldown = this.respawnCooldownMax;
         // Change position back to spawn point
         this.position = new Point(this.spawnPoint.x, this.spawnPoint.y);
-        // Update UI element to show we are respawning
-        var respawnElement = document.getElementById("respawn");
-        if (respawnElement) {
-            respawnElement.innerHTML = "Systems Repairing...";
-        }
+        // Update UI
+        UiManager.getInstance().playerDeadMessage();
     };
     Player.prototype.respawn = function () {
         this.alive = true;
         // Update UI element to show we have respawned
-        var respawnElement = document.getElementById("respawn");
-        if (respawnElement) {
-            respawnElement.innerHTML = "Systems Online";
-        }
+        UiManager.getInstance().playerRespawnMessage();
     };
     return Player;
 }(CircleMovingEntity));
@@ -594,12 +588,44 @@ var EnemySpawnZone = /** @class */ (function (_super) {
     }
     return EnemySpawnZone;
 }(CircleEntity));
+var UiManager = /** @class */ (function () {
+    function UiManager() {
+    }
+    UiManager.getInstance = function () {
+        if (!this.instance) {
+            UiManager.instance = new UiManager();
+        }
+        return UiManager.instance;
+    };
+    UiManager.prototype.updatePlayerScore = function (score) {
+        var scoreElement = document.getElementById("score");
+        if (scoreElement) {
+            scoreElement.innerHTML = "Score: " + score.toString();
+        }
+    };
+    UiManager.prototype.playerDeadMessage = function () {
+        // Update UI element to show we are respawning
+        var respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "Systems Repairing...";
+        }
+    };
+    UiManager.prototype.playerRespawnMessage = function () {
+        // Update UI element to show we have respawned
+        var respawnElement = document.getElementById("respawn");
+        if (respawnElement) {
+            respawnElement.innerHTML = "Systems Online";
+        }
+    };
+    return UiManager;
+}());
 /// <reference path="player.ts" />
 /// <reference path="bumpers.ts" />
 /// <reference path="enemies.ts" />
 /// <reference path="canvasUtils.ts" />
 /// <reference path="targetZones.ts" />
 /// <reference path="spawnZones.ts" />
+/// <reference path="uiManager.ts" />
 var EntityManager = /** @class */ (function () {
     function EntityManager() {
         this.enemySpawnCooldownMax = 300;
@@ -766,10 +792,7 @@ var EntityManager = /** @class */ (function () {
     EntityManager.prototype.updatePlayerScore = function () {
         // Adds 1 to player score
         this.playerScore++;
-        var scoreElement = document.getElementById("score");
-        if (scoreElement) {
-            scoreElement.innerHTML = "Score: " + this.playerScore.toString();
-        }
+        UiManager.getInstance().updatePlayerScore(this.playerScore);
     };
     EntityManager.prototype.renderEntities = function () {
         // Bumpers

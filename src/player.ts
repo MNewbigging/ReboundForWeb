@@ -122,20 +122,13 @@ class Player extends CircleMovingEntity {
         this.respawnCooldown = this.respawnCooldownMax;
         // Change position back to spawn point
         this.position = new Point(this.spawnPoint.x, this.spawnPoint.y);
-
-        // Update UI element to show we are respawning
-        let respawnElement = document.getElementById("respawn");
-        if (respawnElement) {
-            respawnElement.innerHTML = "Systems Repairing...";
-        }
+        // Update UI
+        UiManager.getInstance().playerDeadMessage();
     }
 
     private respawn(): void {
         this.alive = true;
         // Update UI element to show we have respawned
-        let respawnElement = document.getElementById("respawn");
-        if (respawnElement) {
-            respawnElement.innerHTML = "Systems Online";
-        }
+        UiManager.getInstance().playerRespawnMessage();
     }
 }
