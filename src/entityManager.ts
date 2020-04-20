@@ -196,6 +196,19 @@ class EntityManager {
                 this.enemies.splice(i, 1);
             }
         }
+
+        this.removeDeadEntities();
+    }
+
+    private removeDeadEntities(): void {
+        // Loop through and remove all dead bullets
+        for (let i: number = 0; i < this.player.bullets.length; i++) {
+            if (!this.player.bullets[i].alive) {
+                this.player.bullets.splice(i, 1);
+            }
+        }
+
+        // Loop through and remove all dead enemies
     }
 
     /*
@@ -221,8 +234,6 @@ class EntityManager {
     }
 
     public renderEntities(): void {
-
-
         // Bumpers
         for (let bumper of this.circleBumpers) {
             bumper.draw();

@@ -313,7 +313,7 @@ var Bullet = /** @class */ (function (_super) {
     __extends(Bullet, _super);
     function Bullet(p, dir) {
         var _this = _super.call(this, p, "grey", 1, 5, dir, 8) || this;
-        _this.outOfBounds = false;
+        _this.alive = true;
         _this.damageMultiplier = 0;
         _this.damage = 100;
         return _this;
@@ -325,16 +325,16 @@ var Bullet = /** @class */ (function (_super) {
     };
     Bullet.prototype.checkIfOutOfBounds = function () {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
     };
     Bullet.prototype.checkCollisions = function () {
@@ -393,7 +393,7 @@ var Bullet = /** @class */ (function (_super) {
                 // Damage the enemy
                 enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
                 // Mark bullet for removal
-                this.outOfBounds = true;
+                this.alive = true;
             }
         }
     };
@@ -487,12 +487,9 @@ var Player = /** @class */ (function (_super) {
             this.direction.y = 0;
         }
         // Update bullets
-        for (var i = 0; i < this.bullets.length; i++) {
-            this.bullets[i].update();
-            // If this bullet is now out of bounds, remove it
-            if (this.bullets[i].outOfBounds) {
-                this.bullets.splice(i, 1);
-            }
+        for (var _i = 0, _a = this.bullets; _i < _a.length; _i++) {
+            var bullet = _a[_i];
+            bullet.update();
         }
     };
     Player.prototype.playerWillCollideWithBumper = function () {
@@ -740,6 +737,16 @@ var EntityManager = /** @class */ (function () {
                 this.enemies.splice(i, 1);
             }
         }
+        this.removeDeadEntities();
+    };
+    EntityManager.prototype.removeDeadEntities = function () {
+        // Loop through and remove all dead bullets
+        for (var i = 0; i < this.player.bullets.length; i++) {
+            if (!this.player.bullets[i].alive) {
+                this.player.bullets.splice(i, 1);
+            }
+        }
+        // Loop through and remove all dead enemies
     };
     /*
      *  Current spawning behaviour: all spawn points spawn a new enemy every n frames

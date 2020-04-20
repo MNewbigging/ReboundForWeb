@@ -1,7 +1,7 @@
 /// <reference path="entities.ts" />
 
 class Bullet extends CircleMovingEntity {
-    public outOfBounds: boolean = false; 
+    public alive: boolean = true; 
     private damageMultiplier: number = 0;
     private damage: number = 100;
     
@@ -18,16 +18,16 @@ class Bullet extends CircleMovingEntity {
     
     private checkIfOutOfBounds(): void {
         if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.x, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsLeftOrTop(this.position.y, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsRight(this.position.x, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
         else if (this.canvasUtils.outOfBoundsBottom(this.position.y, this.moveSpeed, this.radius)) {
-            this.outOfBounds = true;
+            this.alive = false;
         }
     }
 
@@ -100,7 +100,7 @@ class Bullet extends CircleMovingEntity {
                 // Damage the enemy
                 enemies[closestIndex].takeDamage(this.damage * this.damageMultiplier);
                 // Mark bullet for removal
-                this.outOfBounds = true;
+                this.alive = true;
             }
         }
     }

@@ -84,12 +84,8 @@ class Player extends CircleMovingEntity {
         }
 
         // Update bullets
-        for (let i: number = 0; i < this.bullets.length; i++) {
-            this.bullets[i].update();
-            // If this bullet is now out of bounds, remove it
-            if (this.bullets[i].outOfBounds) {
-                this.bullets.splice(i, 1);
-            }
+        for (let bullet of this.bullets) {
+            bullet.update();
         }
     }
 
