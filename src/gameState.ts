@@ -58,9 +58,8 @@ class GameState {
             this.renderAll();
     
             // Repeat this function to loop
-            requestAnimationFrame(this.gameLoop);
+            //requestAnimationFrame(this.gameLoop);
         }
-
     }
 }
 

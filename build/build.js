@@ -168,6 +168,7 @@ var CanvasUtils = /** @class */ (function () {
         this.mouseOffsetLeft = 0;
         this.mouseOffsetTop = 0;
         this.mousePos = new Point();
+        this.mouseClickArea = 10;
         this.getMouseCanvasPos = function (event) {
             // coords from event minus canvas margins on page
             _this.mousePos.x = event.clientX - _this.mouseOffsetLeft;
@@ -196,6 +197,9 @@ var CanvasUtils = /** @class */ (function () {
     };
     CanvasUtils.prototype.getMousePos = function () {
         return this.mousePos;
+    };
+    CanvasUtils.prototype.getMouseClickArea = function () {
+        return this.mouseClickArea;
     };
     CanvasUtils.prototype.setupCanvas = function () {
         // Get reference to canvas element
@@ -1077,7 +1081,7 @@ var GameState = /** @class */ (function () {
                 // Render
                 _this.renderAll();
                 // Repeat this function to loop
-                requestAnimationFrame(_this.gameLoop);
+                //requestAnimationFrame(this.gameLoop);
             }
         };
         this.canvasUtils = CanvasUtils.getInstance();
@@ -1110,10 +1114,121 @@ var GameState = /** @class */ (function () {
     };
     return GameState;
 }());
+var MenuButton = /** @class */ (function (_super) {
+    __extends(MenuButton, _super);
+    function MenuButton(p, col, lw, w, h, stroke, text) {
+        var _this = _super.call(this, p, col, lw, w, h, stroke) || this;
+        _this.text = "";
+        _this.text = text;
+        return _this;
+    }
+    MenuButton.prototype.draw = function () {
+        _super.prototype.draw.call(this);
+        var canvasContext = CanvasUtils.getInstance().getCanvasContext();
+        canvasContext.font = "20px Arial";
+        canvasContext.fillText(this.text, this.position.x + this.width * 0.4, this.position.y + this.height * 0.6);
+    };
+    MenuButton.prototype.wasClicked = function () {
+        // Get mouse position
+        var mousePos = CanvasUtils.getInstance().getMousePos();
+        var mouseClickArea = CanvasUtils.getInstance().getMouseClickArea();
+        if (Utils.isCircleInsideRectArea(this.position, this.width, this.height, mousePos, mouseClickArea)) {
+            console.log("hit button: " + this.text);
+            return true;
+        }
+        return false;
+    };
+    return MenuButton;
+}(RectangleEntity));
+/// <reference path="menuButton.ts" />
+/// <reference path="../utils.ts" />
+/// <reference path="../canvasUtils.ts" />
+var HomeScreen = /** @class */ (function () {
+    function HomeScreen() {
+        this.buttons = [];
+        this.setupButtons();
+    }
+    HomeScreen.prototype.setupButtons = function () {
+        // Get canvas 
+        var canvas = CanvasUtils.getInstance().getCanvas();
+        // Play button
+        var playBtnText = "Play";
+        var playBtnWidth = canvas.width * 0.2;
+        var playBtnHeight = canvas.height * 0.075;
+        var playBtnColour = "black";
+        var playBtnLineWidth = 3;
+        var playBtnPosition = new Point(canvas.width * 0.1, canvas.height * 0.1);
+        this.buttons.push(new MenuButton(playBtnPosition, playBtnColour, playBtnLineWidth, playBtnWidth, playBtnHeight, playBtnColour, playBtnText));
+    };
+    HomeScreen.prototype.checkIfButtonWasClicked = function () {
+        // Check against this screen's buttons
+        for (var _i = 0, _a = this.buttons; _i < _a.length; _i++) {
+            var button = _a[_i];
+            if (button.wasClicked()) {
+                // Send instruction back to system based on which button was pressed
+            }
+        }
+    };
+    HomeScreen.prototype.homeScreenLoop = function () {
+        for (var _i = 0, _a = this.buttons; _i < _a.length; _i++) {
+            var button = _a[_i];
+            button.draw();
+        }
+    };
+    return HomeScreen;
+}());
+/// <reference path="../gameState.ts" />
+/// <reference path="homeScreen.ts" />
+var CurrentScreen;
+(function (CurrentScreen) {
+    CurrentScreen[CurrentScreen["HOME"] = 0] = "HOME";
+    CurrentScreen[CurrentScreen["GAME"] = 1] = "GAME";
+})(CurrentScreen || (CurrentScreen = {}));
+var ScreenSystem = /** @class */ (function () {
+    function ScreenSystem() {
+        var _this = this;
+        this.onClick = function (event) {
+            // Determine if click hit any buttons on this screen
+            switch (_this.curScreen) {
+                case CurrentScreen.HOME:
+                    _this.homeScreen.checkIfButtonWasClicked();
+                    break;
+                case CurrentScreen.GAME:
+                    break;
+            }
+        };
+        this.systemLoop = function () {
+            switch (_this.curScreen) {
+                case CurrentScreen.HOME:
+                    _this.homeScreen.homeScreenLoop();
+                    break;
+                case CurrentScreen.GAME:
+                    _this.gameState.gameLoop();
+                    break;
+            }
+            requestAnimationFrame(_this.systemLoop);
+        };
+        // Start on home screen
+        this.curScreen = CurrentScreen.HOME;
+        // Setup all screens
+        this.homeScreen = new HomeScreen();
+        // Setup the game
+        this.gameState = new GameState();
+        // Setup menu controls
+        this.setupMenuControls();
+    }
+    ScreenSystem.prototype.setupMenuControls = function () {
+        document.addEventListener("click", this.onClick);
+    };
+    return ScreenSystem;
+}());
 /// <reference path="gamestate.ts" />
-var gameState;
+/// <reference path="./Menu/screenSystem.ts" />
+var menuSystem;
 window.onload = function () {
-    gameState = new GameState();
-    requestAnimationFrame(gameState.gameLoop);
+    // Create the game
+    menuSystem = new ScreenSystem();
+    // Kick off the main loop
+    requestAnimationFrame(menuSystem.systemLoop);
 };
 //# sourceMappingURL=build.js.map

@@ -7,6 +7,7 @@ class CanvasUtils {
     private mouseOffsetLeft: number = 0;
     private mouseOffsetTop: number = 0;
     private mousePos: Point = new Point();
+    private mouseClickArea: number = 10;
 
     public static getInstance(): CanvasUtils {
         if (!this.instance) {
@@ -25,6 +26,10 @@ class CanvasUtils {
 
     public getMousePos(): Point {
         return this.mousePos;
+    }
+
+    public getMouseClickArea(): number {
+        return this.mouseClickArea;
     }
 
     private constructor() {

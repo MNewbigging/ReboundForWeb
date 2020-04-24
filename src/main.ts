@@ -1,10 +1,13 @@
 /// <reference path="gamestate.ts" />
+/// <reference path="./Menu/screenSystem.ts" />
 
-var gameState: GameState;
+var menuSystem: ScreenSystem;
 
 window.onload = () => {
-    gameState = new GameState();
-
-    requestAnimationFrame(gameState.gameLoop);
+    // Create the game
+    menuSystem = new ScreenSystem();    
+    // Kick off the main loop
+    requestAnimationFrame(menuSystem.systemLoop);
 }
+
 
